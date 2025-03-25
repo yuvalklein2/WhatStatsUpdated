@@ -27,7 +27,7 @@ def parse_whatsapp_chat(content):
             date_str, time_str, sender, message = match.groups()
             
             # Skip system messages and media
-            if any(skip in message for skip in ['<המדיה לא נכללה>', 'הוסיף/ה', 'יצר/ה את הקבוצה']):
+            if any(skip in message for skip in ['<המדיה לא נכללה>', 'הוסיף/ה', 'יצר/ה את הקבוצה', 'התמונה הושמטה', 'השמע הושמט', 'סטיקר הושמט', 'הודעה זו נמחקה']):
                 continue
                 
             try:
@@ -171,16 +171,44 @@ def upload_file():
     try:
         if file.filename.endswith('.zip'):
             with zipfile.ZipFile(file, 'r') as zip_ref:
-                # Find the first .txt file in the zip
-                txt_files = [f for f in zip_ref.namelist() if f.endswith('.txt')]
+                # Find all text files in the zip (including in subdirectories)
+                txt_files = []
+                for f in zip_ref.namelist():
+                    if f.endswith('.txt') and not f.startswith('__MACOSX'):
+                        txt_files.append(f)
+                
                 if not txt_files:
                     return jsonify({'error': 'לא נמצא קובץ טקסט בקובץ ה-ZIP'}), 400
                 
-                # Read the first .txt file
-                with zip_ref.open(txt_files[0]) as txt_file:
-                    content = txt_file.read().decode('utf-8')
+                # Try to read the first .txt file with different encodings
+                content = None
+                encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255']
+                
+                for encoding in encodings:
+                    try:
+                        with zip_ref.open(txt_files[0]) as txt_file:
+                            content = txt_file.read().decode(encoding)
+                            break
+                    except UnicodeDecodeError:
+                        continue
+                
+                if content is None:
+                    return jsonify({'error': 'לא ניתן לקרוא את הקובץ. אנא וודא שהקובץ בקידוד תקין'}), 400
         else:
-            content = file.read().decode('utf-8')
+            # Try to read the txt file with different encodings
+            content = None
+            encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255']
+            
+            for encoding in encodings:
+                try:
+                    content = file.read().decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    file.seek(0)  # Reset file pointer for next attempt
+                    continue
+            
+            if content is None:
+                return jsonify({'error': 'לא ניתן לקרוא את הקובץ. אנא וודא שהקובץ בקידוד תקין'}), 400
         
         messages = parse_whatsapp_chat(content)
         stats = calculate_statistics(messages)
@@ -190,10 +218,14 @@ def upload_file():
             'redirect': f'/dashboard?data={json.dumps(stats)}'
         })
         
+    except zipfile.BadZipFile:
+        return jsonify({'error': 'קובץ ZIP לא תקין'}), 400
+    except zipfile.LargeZipFile:
+        return jsonify({'error': 'קובץ ZIP גדול מדי'}), 400
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': 'אירעה שגיאה בעיבוד הקובץ. אנא נסה שוב'}), 400 
+        return jsonify({'error': 'אירעה שגיאה בעיבוד הקובץ. אנא נסה שוב'}), 400
 
 @app.route('/static/<path:path>')
 def send_static(path):
