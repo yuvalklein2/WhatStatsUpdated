@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 import re
@@ -8,10 +8,11 @@ from collections import defaultdict, Counter
 import zipfile
 import io
 
-app = Flask(__name__)
+app = Flask(__name__, 
+           template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')),
+           static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static')))
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'  # Using /tmp for Vercel
-app.config['TEMPLATE_FOLDER'] = '../templates'  # Point to templates directory
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
@@ -132,3 +133,7 @@ def upload_file():
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': 'אירעה שגיאה בעיבוד הקובץ. אנא נסה שוב'}), 400 
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path) 
