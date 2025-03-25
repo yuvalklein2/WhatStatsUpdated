@@ -7,55 +7,99 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {
+            font-family: 'Assistant', sans-serif;
+        }
+        
         .stat-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        
         .chart-container {
             position: relative;
             height: 300px;
             margin-bottom: 20px;
+            padding: 16px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #60a5fa, #2563eb);
+            transition: width 1s ease-in-out;
+        }
+        
+        .insights-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            margin-bottom: 8px;
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8 text-center">ניתוח צ'אט וואטסאפ</h1>
+        <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">ניתוח צ'אט וואטסאפ</h1>
         
         <!-- סיכום כללי -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-2">סה"כ הודעות</h3>
-                <p class="text-2xl" id="totalMessages">0</p>
+                <h3 class="text-lg font-semibold mb-2 text-gray-600">סה"כ הודעות</h3>
+                <div class="stat-value" id="totalMessages">0</div>
+                <div class="stat-label">הודעות בסך הכל</div>
             </div>
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-2">משתתפים ייחודיים</h3>
-                <p class="text-2xl" id="uniqueSenders">0</p>
+                <h3 class="text-lg font-semibold mb-2 text-gray-600">משתתפים</h3>
+                <div class="stat-value" id="uniqueSenders">0</div>
+                <div class="stat-label">משתתפים פעילים</div>
             </div>
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-2">אורך הודעה ממוצע</h3>
-                <p class="text-2xl" id="avgMessageLength">0</p>
+                <h3 class="text-lg font-semibold mb-2 text-gray-600">אורך הודעה</h3>
+                <div class="stat-value" id="avgMessageLength">0</div>
+                <div class="stat-label">תווים בממוצע</div>
             </div>
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-2">זמן תגובה ממוצע</h3>
-                <p class="text-2xl" id="avgResponseTime">0</p>
+                <h3 class="text-lg font-semibold mb-2 text-gray-600">זמן תגובה</h3>
+                <div class="stat-value" id="avgResponseTime">0</div>
+                <div class="stat-label">דקות בממוצע</div>
             </div>
         </div>
 
         <!-- מגמות פעילות -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-4">פעילות לאורך זמן</h3>
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">פעילות לאורך זמן</h3>
                 <div class="chart-container">
                     <canvas id="activityTrendChart"></canvas>
                 </div>
             </div>
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-4">פעילות לפי שעות</h3>
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">פעילות לפי שעות</h3>
                 <div class="chart-container">
                     <canvas id="hourlyActivityChart"></canvas>
                 </div>
@@ -63,13 +107,13 @@
         </div>
 
         <!-- משתמשים ושיחות -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-4">משתתפים מובילים</h3>
-                <div id="topContributors"></div>
+                <h3 class="text-xl font-semibold mb-6 text-gray-800">משתתפים מובילים</h3>
+                <div id="topContributors" class="space-y-6"></div>
             </div>
             <div class="stat-card">
-                <h3 class="text-lg font-semibold mb-4">תובנות נוספות</h3>
+                <h3 class="text-xl font-semibold mb-6 text-gray-800">תובנות מרכזיות</h3>
                 <div id="additionalInsights"></div>
             </div>
         </div>
@@ -85,7 +129,51 @@
         document.getElementById('uniqueSenders').textContent = stats.unique_senders.toLocaleString();
         document.getElementById('avgMessageLength').textContent = stats.average_message_length.toLocaleString();
         document.getElementById('avgResponseTime').textContent = 
-            Math.round(stats.conversation_metrics.avg_response_time / 60).toLocaleString() + ' דקות';
+            Math.round(stats.conversation_metrics.avg_response_time / 60).toLocaleString();
+
+        // הגדרות משותפות לגרפים
+        Chart.defaults.font.family = 'Assistant';
+        Chart.defaults.font.size = 14;
+        
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: 'Assistant',
+                            size: 14,
+                            weight: 500
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Assistant'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Assistant'
+                        }
+                    }
+                }
+            }
+        };
 
         // יצירת גרף פעילות לאורך זמן
         const activityCtx = document.getElementById('activityTrendChart').getContext('2d');
@@ -95,20 +183,43 @@
         new Chart(activityCtx, {
             type: 'line',
             data: {
-                labels: dailyActivity.map(([date]) => date),
+                labels: dailyActivity.map(([date]) => {
+                    const d = new Date(date);
+                    return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+                }),
                 datasets: [{
                     label: 'הודעות ביום',
                     data: dailyActivity.map(([, count]) => count),
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2563eb',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#1f2937',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        titleFont: {
+                            family: 'Assistant',
+                            weight: 600
+                        },
+                        bodyFont: {
+                            family: 'Assistant'
+                        }
                     }
                 }
             }
@@ -128,15 +239,31 @@
                 datasets: [{
                     label: 'הודעות בשעה',
                     data: hourlyData.map(d => d.count),
-                    backgroundColor: 'rgb(54, 162, 235)'
+                    backgroundColor: 'rgba(37,99,235,0.8)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    hoverBackgroundColor: '#2563eb'
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#1f2937',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        titleFont: {
+                            family: 'Assistant',
+                            weight: 600
+                        },
+                        bodyFont: {
+                            family: 'Assistant'
+                        }
                     }
                 }
             }
@@ -147,13 +274,22 @@
         stats.user_metrics.top_contributors.forEach(([sender, count], index) => {
             const percentage = ((count / stats.total_messages) * 100).toFixed(1);
             topContributorsDiv.innerHTML += `
-                <div class="mb-4">
-                    <div class="flex justify-between mb-1">
-                        <span class="font-semibold">${sender}</span>
-                        <span>${count} הודעות (${percentage}%)</span>
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-semibold text-gray-800">${sender}</span>
+                        <span class="text-gray-600">${count.toLocaleString()} הודעות</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded">
-                        <div class="bg-blue-600 rounded h-2" style="width: ${percentage}%"></div>
+                    <div class="relative pt-1">
+                        <div class="flex mb-2 items-center justify-between">
+                            <div>
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                    ${percentage}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="overflow-hidden h-2 text-xs flex rounded bg-blue-100">
+                            <div class="progress-bar" style="width: ${percentage}%"></div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -162,17 +298,30 @@
         // הצגת תובנות נוספות
         const additionalInsightsDiv = document.getElementById('additionalInsights');
         const peakHours = stats.engagement_metrics.peak_hours
-            .map(([hour, count]) => `${hour}:00-${(hour+1)%24}:00 (${count} הודעות)`)
+            .map(([hour, count]) => `${hour}:00-${(hour+1)%24}:00 (${count.toLocaleString()} הודעות)`)
             .join(', ');
         
         const mostActiveDay = stats.engagement_metrics.most_active_days[0];
-        const formattedDate = new Date(mostActiveDay[0]).toLocaleDateString('he-IL');
+        const formattedDate = new Date(mostActiveDay[0]).toLocaleDateString('he-IL', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
         additionalInsightsDiv.innerHTML = `
             <div class="space-y-4">
-                <p><strong>שעות שיא:</strong> ${peakHours}</p>
-                <p><strong>היום הפעיל ביותר:</strong> ${formattedDate} (${mostActiveDay[1]} הודעות)</p>
-                <p><strong>טווח תאריכים:</strong> ${stats.date_range.start} - ${stats.date_range.end}</p>
+                <div class="insights-item">
+                    <p class="font-semibold text-gray-800 mb-1">שעות שיא</p>
+                    <p class="text-gray-600">${peakHours}</p>
+                </div>
+                <div class="insights-item">
+                    <p class="font-semibold text-gray-800 mb-1">היום הפעיל ביותר</p>
+                    <p class="text-gray-600">${formattedDate} (${mostActiveDay[1].toLocaleString()} הודעות)</p>
+                </div>
+                <div class="insights-item">
+                    <p class="font-semibold text-gray-800 mb-1">טווח תאריכים</p>
+                    <p class="text-gray-600">${stats.date_range.start} - ${stats.date_range.end}</p>
+                </div>
             </div>
         `;
     </script>
