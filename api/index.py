@@ -60,25 +60,86 @@ def calculate_statistics(messages):
         'date_range': {
             'start': min(msg['date'] for msg in messages).strftime('%d/%m/%Y'),
             'end': max(msg['date'] for msg in messages).strftime('%d/%m/%Y')
+        },
+        'activity_trends': {
+            'daily': defaultdict(int),
+            'weekly': defaultdict(int),
+            'monthly': defaultdict(int)
+        },
+        'engagement_metrics': {
+            'most_active_days': [],
+            'least_active_days': [],
+            'peak_hours': [],
+            'quiet_hours': []
+        },
+        'user_metrics': {
+            'top_contributors': [],
+            'response_patterns': defaultdict(float),
+            'activity_consistency': defaultdict(float)
+        },
+        'conversation_metrics': {
+            'avg_response_time': 0,
+            'conversation_starters': [],
+            'conversation_length_distribution': defaultdict(int)
         }
     }
     
     total_length = 0
+    prev_msg_time = None
+    conversation_messages = []
+    daily_messages = defaultdict(list)
+    
     for msg in messages:
         stats['messages_per_sender'][msg['sender']] += 1
         stats['messages_per_hour'][msg['date'].hour] += 1
         stats['messages_per_day'][msg['date'].strftime('%Y-%m-%d')] += 1
         total_length += len(msg['message'])
+        
+        stats['activity_trends']['daily'][msg['date'].strftime('%Y-%m-%d')] += 1
+        stats['activity_trends']['weekly'][msg['date'].strftime('%Y-%W')] += 1
+        stats['activity_trends']['monthly'][msg['date'].strftime('%Y-%m')] += 1
+        
+        if prev_msg_time:
+            time_diff = (msg['date'] - prev_msg_time).total_seconds()
+            if time_diff < 3600:
+                conversation_messages.append(msg)
+                stats['conversation_metrics']['avg_response_time'] += time_diff
+            else:
+                if len(conversation_messages) > 1:
+                    stats['conversation_metrics']['conversation_length_distribution'][len(conversation_messages)] += 1
+                conversation_messages = [msg]
+        
+        prev_msg_time = msg['date']
+        daily_messages[msg['date'].strftime('%Y-%m-%d')].append(msg)
     
-    # Convert defaultdict to regular dict for JSON serialization
+    daily_activity = [(day, len(msgs)) for day, msgs in daily_messages.items()]
+    daily_activity.sort(key=lambda x: x[1], reverse=True)
+    stats['engagement_metrics']['most_active_days'] = daily_activity[:5]
+    stats['engagement_metrics']['least_active_days'] = daily_activity[-5:]
+    
+    hourly_activity = [(hour, count) for hour, count in stats['messages_per_hour'].items()]
+    hourly_activity.sort(key=lambda x: x[1], reverse=True)
+    stats['engagement_metrics']['peak_hours'] = hourly_activity[:3]
+    stats['engagement_metrics']['quiet_hours'] = hourly_activity[-3:]
+    
+    sender_activity = [(sender, count) for sender, count in stats['messages_per_sender'].items()]
+    sender_activity.sort(key=lambda x: x[1], reverse=True)
+    stats['user_metrics']['top_contributors'] = sender_activity[:5]
+    
+    total_conversations = sum(stats['conversation_metrics']['conversation_length_distribution'].values())
+    if total_conversations > 0:
+        stats['conversation_metrics']['avg_response_time'] /= total_conversations
+    
     stats['messages_per_sender'] = dict(stats['messages_per_sender'])
     stats['messages_per_hour'] = dict(stats['messages_per_hour'])
     stats['messages_per_day'] = dict(stats['messages_per_day'])
+    stats['activity_trends']['daily'] = dict(stats['activity_trends']['daily'])
+    stats['activity_trends']['weekly'] = dict(stats['activity_trends']['weekly'])
+    stats['activity_trends']['monthly'] = dict(stats['activity_trends']['monthly'])
+    stats['conversation_metrics']['conversation_length_distribution'] = dict(stats['conversation_metrics']['conversation_length_distribution'])
     
-    # Calculate most active hour
     stats['most_active_hour'] = max(stats['messages_per_hour'].items(), key=lambda x: x[1])[0]
     
-    # Calculate average message length
     stats['average_message_length'] = round(total_length / len(messages), 1)
     
     return stats
