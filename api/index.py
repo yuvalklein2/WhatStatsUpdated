@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify, send_from_directory
+from flask import Flask, request, render_template, jsonify, send_from_directory, session, redirect
 from werkzeug.utils import secure_filename
 import os
 import re
@@ -7,19 +7,21 @@ import json
 from collections import defaultdict, Counter
 import zipfile
 import io
+import secrets
 
 app = Flask(__name__, 
            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')),
            static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static')))
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['UPLOAD_FOLDER'] = '/tmp/uploads'  # Using /tmp for Vercel
+app.config['UPLOAD_FOLDER'] = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'public'))
+app.secret_key = secrets.token_hex(16)  # Generate a random secret key
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def parse_whatsapp_chat(content):
     messages = []
-    pattern = r'\[(\d{1,2}\.\d{1,2}\.\d{4}), (\d{1,2}:\d{1,2}:\d{2})\] ([^:]+): (.+)'
+    pattern = r'\[(\d{1,2}/\d{1,2}/\d{4}), (\d{1,2}:\d{2}:\d{2})\] ([^:]+): (.+)'
     
     for line in content.split('\n'):
         match = re.match(pattern, line)
@@ -27,12 +29,10 @@ def parse_whatsapp_chat(content):
             date_str, time_str, sender, message = match.groups()
             
             # Skip system messages and media
-            if any(skip in message for skip in ['<המדיה לא נכללה>', 'הוסיף/ה', 'יצר/ה את הקבוצה', 'התמונה הושמטה', 'השמע הושמט', 'סטיקר הושמט', 'הודעה זו נמחקה']):
+            if any(skip in message for skip in ['<המדיה לא נכללה>', 'הוסיף/ה', 'יצר/ה את הקבוצה', 'התמונה הושמטה', 'השמע הושמט', 'סטיקר הושמט', 'הודעה זו נמחקה', 'Messages and calls are end-to-end encrypted']):
                 continue
                 
             try:
-                # Convert date format from DD.MM.YYYY to DD/MM/YYYY for parsing
-                date_str = date_str.replace('.', '/')
                 date_time = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M:%S")
                 
                 messages.append({
@@ -182,7 +182,7 @@ def upload_file():
                 
                 # Try to read the first .txt file with different encodings
                 content = None
-                encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255']
+                encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255', 'windows-1255', 'mac-hebrew']
                 
                 for encoding in encodings:
                     try:
@@ -197,7 +197,7 @@ def upload_file():
         else:
             # Try to read the txt file with different encodings
             content = None
-            encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255']
+            encodings = ['utf-8', 'utf-16', 'iso-8859-8', 'cp1255', 'windows-1255', 'mac-hebrew']
             
             for encoding in encodings:
                 try:
@@ -213,9 +213,19 @@ def upload_file():
         messages = parse_whatsapp_chat(content)
         stats = calculate_statistics(messages)
         
+        # Store only essential stats in session to reduce size
+        session['chat_stats'] = {
+            'total_messages': stats['total_messages'],
+            'unique_senders': stats['unique_senders'],
+            'average_message_length': stats['average_message_length'],
+            'messages_per_hour': stats['messages_per_hour'],
+            'messages_per_sender': dict(list(stats['messages_per_sender'].items())[:10]),  # Only top 10 senders
+            'messages_per_day': dict(sorted(stats['messages_per_day'].items())[-30:])  # Only last 30 days
+        }
+        
         return jsonify({
             'success': True,
-            'redirect': f'/dashboard?data={json.dumps(stats)}'
+            'redirect': '/dashboard'
         })
         
     except zipfile.BadZipFile:
@@ -226,6 +236,13 @@ def upload_file():
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': 'אירעה שגיאה בעיבוד הקובץ. אנא נסה שוב'}), 400
+
+@app.route('/dashboard')
+def dashboard():
+    stats = session.get('chat_stats')
+    if not stats:
+        return redirect('/')
+    return render_template('dashboard.html', stats=stats)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
