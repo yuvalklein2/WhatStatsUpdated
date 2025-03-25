@@ -227,6 +227,6 @@ def upload_file():
     except Exception as e:
         return jsonify({'error': 'אירעה שגיאה בעיבוד הקובץ. אנא נסה שוב'}), 400
 
-@app.route('/static/<path:path>')
-def send_static(path):
-    return send_from_directory('static', path) 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename) 
