@@ -85,6 +85,50 @@
             background-color: #f8fafc;
             margin-bottom: 8px;
         }
+        
+        .date-filter {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        
+        .date-input {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: 'Assistant', sans-serif;
+            margin: 0 8px;
+        }
+        
+        .filter-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-button:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .reset-button {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 8px;
+        }
+        
+        .reset-button:hover {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -100,6 +144,24 @@
         
         <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">ניתוח צ'אט וואטסאפ</h1>
         
+        <!-- פילטר תאריכים -->
+        <div class="date-filter">
+            <div class="flex items-center justify-center flex-wrap gap-4">
+                <div class="flex items-center">
+                    <label class="text-gray-600">מתאריך:</label>
+                    <input type="date" id="startDate" class="date-input">
+                </div>
+                <div class="flex items-center">
+                    <label class="text-gray-600">עד תאריך:</label>
+                    <input type="date" id="endDate" class="date-input">
+                </div>
+                <div>
+                    <button onclick="applyDateFilter()" class="filter-button">החל סינון</button>
+                    <button onclick="resetDateFilter()" class="reset-button">איפוס</button>
+                </div>
+            </div>
+        </div>
+
         <!-- סיכום כללי -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="stat-card">
@@ -154,16 +216,116 @@
     </div>
 
     <script>
-        // קבלת הנתונים מה-URL
+        // קבלת הנתונים המקוריים מה-URL
         const urlParams = new URLSearchParams(window.location.search);
-        const stats = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        const originalStats = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        let stats = {...originalStats};  // עותק של הנתונים המקוריים
 
-        // עדכון סיכום כללי
-        document.getElementById('totalMessages').textContent = stats.total_messages.toLocaleString();
-        document.getElementById('uniqueSenders').textContent = stats.unique_senders;
-        document.getElementById('avgMessageLength').textContent = stats.average_message_length.toLocaleString();
-        document.getElementById('avgResponseTime').textContent = 
-            Math.round(stats.conversation_metrics.avg_response_time / 60).toLocaleString();
+        // פונקציה לסינון הודעות לפי תאריכים
+        function filterMessagesByDate(startDate, endDate) {
+            if (!startDate && !endDate) return {...originalStats};
+            
+            const start = startDate ? new Date(startDate) : new Date(0);
+            const end = endDate ? new Date(endDate) : new Date();
+            
+            // סינון הודעות לפי טווח התאריכים
+            const filteredActivity = Object.entries(originalStats.activity_trends.daily)
+                .filter(([date]) => {
+                    const messageDate = new Date(date);
+                    return messageDate >= start && messageDate <= end;
+                });
+            
+            // חישוב סטטיסטיקות מחדש
+            const filteredStats = {
+                ...originalStats,
+                activity_trends: {
+                    daily: Object.fromEntries(filteredActivity)
+                },
+                date_range: {
+                    start: startDate || originalStats.date_range.start,
+                    end: endDate || originalStats.date_range.end
+                }
+            };
+            
+            // חישוב סה"כ הודעות בטווח
+            filteredStats.total_messages = Object.values(filteredStats.activity_trends.daily)
+                .reduce((sum, count) => sum + count, 0);
+            
+            return filteredStats;
+        }
+
+        // פונקציה להחלת הסינון
+        function applyDateFilter() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate && !endDate) {
+                alert('נא לבחור לפחות תאריך אחד לסינון');
+                return;
+            }
+            
+            stats = filterMessagesByDate(startDate, endDate);
+            updateDashboard();
+        }
+
+        // פונקציה לאיפוס הסינון
+        function resetDateFilter() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            stats = {...originalStats};
+            updateDashboard();
+        }
+
+        // פונקציה לעדכון הדשבורד
+        function updateDashboard() {
+            // עדכון סיכום כללי
+            document.getElementById('totalMessages').textContent = stats.total_messages.toLocaleString();
+            document.getElementById('uniqueSenders').textContent = stats.unique_senders;
+            document.getElementById('avgMessageLength').textContent = stats.average_message_length.toLocaleString();
+            document.getElementById('avgResponseTime').textContent = 
+                Math.round(stats.conversation_metrics.avg_response_time / 60).toLocaleString();
+
+            // עדכון גרף פעילות לאורך זמן
+            const dailyActivity = Object.entries(stats.activity_trends.daily)
+                .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+            activityChart.data.labels = dailyActivity.map(([date]) => {
+                const d = new Date(date);
+                return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+            });
+            activityChart.data.datasets[0].data = dailyActivity.map(([, count]) => count);
+            activityChart.update();
+
+            // עדכון תובנות נוספות
+            const additionalInsightsDiv = document.getElementById('additionalInsights');
+            const peakHours = stats.engagement_metrics.peak_hours
+                .map(([hour, count]) => `${hour}:00-${(hour+1)%24}:00 (${count.toLocaleString()} הודעות)`)
+                .join(', ');
+            
+            const mostActiveDay = stats.engagement_metrics.most_active_days[0];
+            const formattedDate = new Date(mostActiveDay[0]).toLocaleDateString('he-IL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            additionalInsightsDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="insights-item">
+                        <p class="font-semibold text-gray-800 mb-1">שעות שיא</p>
+                        <p class="text-gray-600">${peakHours}</p>
+                    </div>
+                    <div class="insights-item">
+                        <p class="font-semibold text-gray-800 mb-1">היום הפעיל ביותר</p>
+                        <p class="text-gray-600">${formattedDate} (${mostActiveDay[1].toLocaleString()} הודעות)</p>
+                    </div>
+                    <div class="insights-item">
+                        <p class="font-semibold text-gray-800 mb-1">טווח תאריכים</p>
+                        <p class="text-gray-600">${stats.date_range.start} - ${stats.date_range.end}</p>
+                    </div>
+                </div>
+            `;
+        }
 
         // הגדרות משותפות לגרפים
         Chart.defaults.font.family = 'Assistant';
@@ -214,7 +376,7 @@
         const dailyActivity = Object.entries(stats.activity_trends.daily)
             .sort((a, b) => new Date(a[0]) - new Date(b[0]));
 
-        new Chart(activityCtx, {
+        let activityChart = new Chart(activityCtx, {
             type: 'line',
             data: {
                 labels: dailyActivity.map(([date]) => {
@@ -337,36 +499,6 @@
                 </div>
             `;
         });
-
-        // הצגת תובנות נוספות
-        const additionalInsightsDiv = document.getElementById('additionalInsights');
-        const peakHours = stats.engagement_metrics.peak_hours
-            .map(([hour, count]) => `${hour}:00-${(hour+1)%24}:00 (${count.toLocaleString()} הודעות)`)
-            .join(', ');
-        
-        const mostActiveDay = stats.engagement_metrics.most_active_days[0];
-        const formattedDate = new Date(mostActiveDay[0]).toLocaleDateString('he-IL', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        additionalInsightsDiv.innerHTML = `
-            <div class="space-y-4">
-                <div class="insights-item">
-                    <p class="font-semibold text-gray-800 mb-1">שעות שיא</p>
-                    <p class="text-gray-600">${peakHours}</p>
-                </div>
-                <div class="insights-item">
-                    <p class="font-semibold text-gray-800 mb-1">היום הפעיל ביותר</p>
-                    <p class="text-gray-600">${formattedDate} (${mostActiveDay[1].toLocaleString()} הודעות)</p>
-                </div>
-                <div class="insights-item">
-                    <p class="font-semibold text-gray-800 mb-1">טווח תאריכים</p>
-                    <p class="text-gray-600">${stats.date_range.start} - ${stats.date_range.end}</p>
-                </div>
-            </div>
-        `;
     </script>
 </body>
 </html> 
