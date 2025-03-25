@@ -126,7 +126,7 @@
 
         // עדכון סיכום כללי
         document.getElementById('totalMessages').textContent = stats.total_messages.toLocaleString();
-        document.getElementById('uniqueSenders').textContent = stats.unique_senders.toLocaleString();
+        document.getElementById('uniqueSenders').textContent = stats.unique_senders;
         document.getElementById('avgMessageLength').textContent = stats.average_message_length.toLocaleString();
         document.getElementById('avgResponseTime').textContent = 
             Math.round(stats.conversation_metrics.avg_response_time / 60).toLocaleString();
@@ -188,17 +188,24 @@
                     return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
                 }),
                 datasets: [{
-                    label: 'הודעות ביום',
+                    label: 'מספר ההודעות ביום',
                     data: dailyActivity.map(([, count]) => count),
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37,99,235,0.1)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#2563eb',
-                    pointBorderWidth: 2
+                    pointBorderWidth: 2,
+                    segment: {
+                        borderColor: ctx => '#2563eb'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
                 }]
             },
             options: {
@@ -219,7 +226,9 @@
                         },
                         bodyFont: {
                             family: 'Assistant'
-                        }
+                        },
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             }
