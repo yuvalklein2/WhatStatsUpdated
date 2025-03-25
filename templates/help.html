@@ -16,6 +16,8 @@
             --text-secondary: #4A4A4A;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --transition: all 0.3s ease;
+            --whatsapp-green: #25D366;
+            --whatsapp-dark: #128C7E;
         }
         
         body {
@@ -40,6 +42,10 @@
             margin-bottom: 1.25rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
+            position: relative;
+            opacity: 0;
+            animation: slideInRight 0.5s ease forwards;
+            cursor: pointer;
         }
         .step-card:hover {
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -87,6 +93,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
         }
         .platform-button i {
             font-size: 1.5rem;
@@ -130,9 +138,110 @@
         .demo-gif {
             display: none;
         }
+        .progress-bar-container {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 100vh;
+            background-color: var(--bg-color);
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: var(--whatsapp-green);
+            height: 0%;
+            transition: height 0.3s ease;
+        }
+        .step-card.completed {
+            border-right: 4px solid var(--whatsapp-green);
+        }
+        .step-card.completed .step-number {
+            background-color: var(--whatsapp-green);
+        }
+
+        .step-card.completed::after {
+            content: '✓';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--whatsapp-green);
+            font-size: 1.5rem;
+        }
+
+        .step-card .completion-checkbox {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .step-card.completed .completion-checkbox {
+            background-color: var(--whatsapp-green);
+            border-color: var(--whatsapp-green);
+        }
+
+        .platform-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background-color: rgba(37, 211, 102, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .platform-button:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .platform-button.active::after {
+            background-color: rgba(37, 211, 102, 0.2);
+        }
+
+        /* התאמה למובייל */
+        @media (max-width: 768px) {
+            .progress-bar-container {
+                width: 4px;
+            }
+            
+            .platform-button {
+                padding: 0.75rem 1.5rem;
+            }
+        }
+
+        /* אנימציות */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
+    <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+    </div>
     <div class="container">
         <!-- Back Button -->
         <a href="/" class="back-button">
@@ -282,7 +391,7 @@
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
     <script>
-        // Initialize tooltips
+        // אתחול טולטיפים
         tippy('[data-tippy-content]', {
             placement: 'top',
             arrow: true,
@@ -291,17 +400,109 @@
             duration: 200
         });
 
-        // Platform switcher
+        // מעבר בין פלטפורמות
         const platformButtons = document.querySelectorAll('.platform-button');
         const platformContents = document.querySelectorAll('.platform-content');
+        const stepCards = document.querySelectorAll('.step-card');
+        const progressBar = document.querySelector('.progress-bar');
 
+        // אנימציית כניסה לכרטיסיות
+        stepCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+
+        // עדכון התקדמות
+        function updateProgress() {
+            const totalSteps = stepCards.length;
+            const completedSteps = document.querySelectorAll('.step-card.completed').length;
+            const progress = (completedSteps / totalSteps) * 100;
+            progressBar.style.height = `${progress}%`;
+
+            // אנימציה לסרגל ההתקדמות
+            if (progress === 100) {
+                progressBar.style.boxShadow = '0 0 10px var(--whatsapp-green)';
+            } else {
+                progressBar.style.boxShadow = 'none';
+            }
+        }
+
+        // טיפול בלחיצה על כרטיסייה
+        stepCards.forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('completed');
+                updateProgress();
+
+                // אנימציה בעת השלמת שלב
+                if (card.classList.contains('completed')) {
+                    const checkmark = document.createElement('div');
+                    checkmark.className = 'completion-animation';
+                    card.appendChild(checkmark);
+                    setTimeout(() => checkmark.remove(), 1000);
+                }
+            });
+        });
+
+        // מעבר בין פלטפורמות
         platformButtons.forEach(button => {
             button.addEventListener('click', () => {
                 platformButtons.forEach(btn => btn.classList.remove('active'));
-                platformContents.forEach(content => content.classList.remove('active'));
+                platformContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none';
+                });
 
                 button.classList.add('active');
-                document.getElementById(`${button.dataset.platform}-content`).classList.add('active');
+                const targetContent = document.getElementById(`${button.dataset.platform}-content`);
+                targetContent.style.display = 'block';
+                
+                // אנימציית פייד אין לתוכן החדש
+                setTimeout(() => {
+                    targetContent.classList.add('active');
+                    // אנימציית כניסה מחדש לכרטיסיות
+                    targetContent.querySelectorAll('.step-card').forEach((card, index) => {
+                        card.style.animation = 'none';
+                        card.offsetHeight; // Trigger reflow
+                        card.style.animation = `slideInRight 0.5s ease forwards ${index * 0.1}s`;
+                    });
+                }, 50);
+            });
+        });
+
+        // שמירת התקדמות בלוקל סטורג'
+        function saveProgress() {
+            const completedCards = Array.from(stepCards).map(card => card.classList.contains('completed'));
+            localStorage.setItem('whatstats-guide-progress', JSON.stringify(completedCards));
+        }
+
+        function loadProgress() {
+            const savedProgress = localStorage.getItem('whatstats-guide-progress');
+            if (savedProgress) {
+                const completedCards = JSON.parse(savedProgress);
+                completedCards.forEach((isCompleted, index) => {
+                    if (isCompleted) {
+                        stepCards[index].classList.add('completed');
+                    }
+                });
+                updateProgress();
+            }
+        }
+
+        // שמירת התקדמות בכל שינוי
+        stepCards.forEach(card => {
+            card.addEventListener('click', saveProgress);
+        });
+
+        // טעינת התקדמות בטעינת העמוד
+        document.addEventListener('DOMContentLoaded', loadProgress);
+
+        // אנימציית ריחוף על הכפתורים
+        platformButtons.forEach(button => {
+            button.addEventListener('mouseover', () => {
+                button.style.transform = 'translateY(-2px)';
+            });
+            
+            button.addEventListener('mouseout', () => {
+                button.style.transform = 'translateY(0)';
             });
         });
     </script>
