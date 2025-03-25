@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatStats - איך לייצא צ'אט מוואטסאפ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6/dist/tippy.css">
+    <style>
+        :root {
+            --bg-color: #F7F9FB;
+            --card-bg: #FFFFFF;
+            --text-primary: #2E3A59;
+            --text-secondary: #4A4A4A;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Assistant', 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Assistant', sans-serif;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+        }
+        .step-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+        }
+        .whatsapp-green {
+            color: #25D366;
+        }
+        .back-button {
+            color: #25D366;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            color: #128C7E;
+        }
+        .platform-selector {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .platform-button {
+            border: none;
+            background: none;
+            padding: 1rem 2rem;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .platform-button i {
+            font-size: 1.5rem;
+        }
+        .platform-button.active {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+        }
+        .platform-content {
+            display: none;
+        }
+        .platform-content.active {
+            display: block;
+        }
+        .step-image {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .step-image:hover {
+            transform: scale(1.02);
+        }
+        .step-tip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--bg-color);
+            border-radius: 6px;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            cursor: help;
+        }
+        .step-tip i {
+            margin-left: 0.5rem;
+            color: #FF9900;
+        }
+        .demo-gif {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin: 2rem auto;
+            display: block;
+            box-shadow: var(--shadow);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Button -->
+        <a href="/" class="back-button">
+            <i class="bi bi-arrow-right"></i>
+            חזרה לדף הראשי
+        </a>
+
+        <!-- Header -->
+        <div class="header-section animate-in" style="animation-delay: 0.1s">
+            <h1 class="h3 mb-3">
+                <i class="bi bi-question-circle whatsapp-green"></i>
+                איך לייצא צ'אט מוואטסאפ
+            </h1>
+            <p class="lead">מדריך פשוט לייצוא היסטוריית שיחות מוואטסאפ</p>
+            
+            <img src="https://i.imgur.com/example.gif" alt="הדגמת ייצוא צ'אט" class="demo-gif">
+        </div>
+
+        <!-- Platform Selector -->
+        <div class="platform-selector text-center mb-4">
+            <button class="platform-button active" data-platform="android">
+                <i class="bi bi-android2"></i> אנדרואיד
+            </button>
+            <button class="platform-button" data-platform="iphone">
+                <i class="bi bi-apple"></i> אייפון
+            </button>
+        </div>
+
+        <!-- Android Instructions -->
+        <div class="platform-content active" id="android-content">
+            <div class="step-card">
+                <span class="step-number">1</span>
+                <h5 class="d-inline">פתיחת הצ'אט</h5>
+                <p class="mt-2">פתח את הצ'אט שברצונך לייצא בוואטסאפ</p>
+                <img src="https://i.imgur.com/android-step1.jpg" alt="פתיחת צ'אט באנדרואיד" class="step-image">
+                <div class="step-tip" data-tippy-content="וודא שאתה נמצא בצ'אט הנכון ושיש לך מספיק הודעות להצגה">
+                    <i class="bi bi-lightbulb"></i>
+                    טיפ: גלול למעלה כדי לטעון יותר הודעות
+                </div>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">2</span>
+                <h5 class="d-inline">פתיחת תפריט אפשרויות</h5>
+                <p class="mt-2">לחץ על שלוש הנקודות בפינה הימנית העליונה</p>
+                <img src="https://i.imgur.com/android-step2.jpg" alt="פתיחת תפריט באנדרואיד" class="step-image">
+                <div class="step-tip" data-tippy-content="התפריט נמצא תמיד בפינה העליונה, גם בקבוצות וגם בצ'אטים פרטיים">
+                    <i class="bi bi-lightbulb"></i>
+                    טיפ: התפריט מכיל אפשרויות נוספות לניהול הצ'אט
+                </div>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">3</span>
+                <h5 class="d-inline">ייצוא הצ'אט</h5>
+                <p class="mt-2">בחר באפשרות "עוד" ואז "ייצוא צ'אט"</p>
+                <img src="https://i.imgur.com/android-step3.jpg" alt="ייצוא צ'אט באנדרואיד" class="step-image">
+                <div class="step-tip" data-tippy-content="אם אתה לא רואה את האפשרות, נסה לגלול בתפריט למטה">
+                    <i class="bi bi-lightbulb"></i>
+                    טיפ: האפשרות נמצאת בתחתית התפריט
+                </div>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">4</span>
+                <h5 class="d-inline">בחירת אפשרויות</h5>
+                <p class="mt-2">בחר "ללא מדיה" כדי לייצא רק את ההודעות הטקסטואליות</p>
+                <img src="https://i.imgur.com/android-step4.jpg" alt="בחירת אפשרויות באנדרואיד" class="step-image">
+                <div class="step-tip" data-tippy-content="ייצוא ללא מדיה מהיר יותר ומייצר קובץ קטן יותר">
+                    <i class="bi bi-lightbulb"></i>
+                    טיפ: ייצוא עם מדיה יכול להיות גדול מאוד
+                </div>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">5</span>
+                <h5 class="d-inline">שמירת הקובץ</h5>
+                <p class="mt-2">בחר את היעד לשמירת הקובץ במכשיר שלך</p>
+                <img src="https://i.imgur.com/android-step5.jpg" alt="שמירת קובץ באנדרואיד" class="step-image">
+                <div class="step-tip" data-tippy-content="מומלץ לשמור בתיקיית ההורדות או לשלוח לעצמך במייל">
+                    <i class="bi bi-lightbulb"></i>
+                    טיפ: זכור היכן שמרת את הקובץ
+                </div>
+            </div>
+        </div>
+
+        <!-- iPhone Instructions -->
+        <div class="platform-content" id="iphone-content">
+            <div class="step-card">
+                <span class="step-number">1</span>
+                <h5 class="d-inline">פתיחת הצ'אט</h5>
+                <p class="mt-2">פתח את הצ'אט שברצונך לייצא בוואטסאפ</p>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">2</span>
+                <h5 class="d-inline">פתיחת פרטי הצ'אט</h5>
+                <p class="mt-2">לחץ על שם הצ'אט בחלק העליון של המסך</p>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">3</span>
+                <h5 class="d-inline">ייצוא הצ'אט</h5>
+                <p class="mt-2">גלול למטה ובחר באפשרות "ייצוא צ'אט"</p>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">4</span>
+                <h5 class="d-inline">בחירת אפשרויות</h5>
+                <p class="mt-2">בחר "ללא מדיה" לייצוא הודעות טקסט בלבד</p>
+            </div>
+
+            <div class="step-card">
+                <span class="step-number">5</span>
+                <h5 class="d-inline">שיתוף הקובץ</h5>
+                <p class="mt-2">בחר את אפשרות השיתוף המועדפת עליך (למשל: שמירה לקבצים, שליחה במייל)</p>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="alert alert-success mt-4" role="alert">
+            <h5><i class="bi bi-lightbulb"></i> טיפים חשובים:</h5>
+            <ul class="mb-0">
+                <li>מומלץ לייצא ללא מדיה לניתוח מהיר יותר</li>
+                <li>הקובץ המיוצא יהיה בפורמט TXT</li>
+                <li>אם הקובץ גדול, ייתכן שיישמר בפורמט ZIP</li>
+                <li>WhatStats תומך בשני הפורמטים</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script>
+        // Initialize tooltips
+        tippy('[data-tippy-content]', {
+            placement: 'top',
+            arrow: true,
+            animation: 'scale',
+            theme: 'light',
+            duration: 200
+        });
+
+        // Platform switcher
+        const platformButtons = document.querySelectorAll('.platform-button');
+        const platformContents = document.querySelectorAll('.platform-content');
+
+        platformButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                platformButtons.forEach(btn => btn.classList.remove('active'));
+                platformContents.forEach(content => content.classList.remove('active'));
+
+                button.classList.add('active');
+                document.getElementById(`${button.dataset.platform}-content`).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html> 
