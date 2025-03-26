@@ -8,6 +8,8 @@ from collections import defaultdict, Counter
 import zipfile
 import io
 import secrets
+import tempfile
+import pickle
 
 app = Flask(__name__, 
            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')),
@@ -23,6 +25,9 @@ def parse_whatsapp_chat(content):
     messages = []
     pattern = r'\[(\d{1,2}/\d{1,2}/\d{4}), (\d{1,2}:\d{2}:\d{2})\] ([^:]+): (.+)'
     
+    # חישוב התאריך לפני שנה
+    one_year_ago = datetime.now().replace(year=datetime.now().year - 1)
+    
     for line in content.split('\n'):
         match = re.match(pattern, line)
         if match:
@@ -35,16 +40,18 @@ def parse_whatsapp_chat(content):
             try:
                 date_time = datetime.strptime(f"{date_str} {time_str}", "%d/%m/%Y %H:%M:%S")
                 
-                messages.append({
-                    'date': date_time,
-                    'sender': sender.strip(),
-                    'message': message.strip()
-                })
+                # סינון רק הודעות משנה אחרונה
+                if date_time >= one_year_ago:
+                    messages.append({
+                        'date': date_time,
+                        'sender': sender.strip(),
+                        'message': message.strip()
+                    })
             except ValueError:
                 continue
     
     if not messages:
-        raise ValueError("לא נמצאו הודעות תקינות בקובץ")
+        raise ValueError("לא נמצאו הודעות תקינות בקובץ משנה אחרונה")
     
     return messages
 
@@ -56,93 +63,77 @@ def calculate_statistics(messages):
         'messages_per_hour': defaultdict(int),
         'messages_per_day': defaultdict(int),
         'most_active_hour': 0,
-        'average_message_length': 0,
+        'most_active_day': '',
+        'most_messages_in_day': 0,
+        'most_messages_in_hour': 0,
         'date_range': {
             'start': min(msg['date'] for msg in messages).strftime('%d/%m/%Y'),
             'end': max(msg['date'] for msg in messages).strftime('%d/%m/%Y')
-        },
-        'activity_trends': {
-            'daily': defaultdict(int),
-            'weekly': defaultdict(int),
-            'monthly': defaultdict(int)
-        },
-        'engagement_metrics': {
-            'most_active_days': [],
-            'least_active_days': [],
-            'peak_hours': [],
-            'quiet_hours': []
-        },
-        'user_metrics': {
-            'top_contributors': [],
-            'response_patterns': defaultdict(float),
-            'activity_consistency': defaultdict(float)
-        },
-        'conversation_metrics': {
-            'avg_response_time': 0,
-            'conversation_starters': [],
-            'conversation_length_distribution': defaultdict(int)
         }
     }
-    
-    total_length = 0
-    prev_msg_time = None
-    conversation_messages = []
-    daily_messages = defaultdict(list)
     
     for msg in messages:
         stats['messages_per_sender'][msg['sender']] += 1
         stats['messages_per_hour'][msg['date'].hour] += 1
-        stats['messages_per_day'][msg['date'].strftime('%Y-%m-%d')] += 1
-        total_length += len(msg['message'])
+        day_str = msg['date'].strftime('%d/%m/%Y')
+        stats['messages_per_day'][day_str] += 1
         
-        stats['activity_trends']['daily'][msg['date'].strftime('%Y-%m-%d')] += 1
-        stats['activity_trends']['weekly'][msg['date'].strftime('%Y-%W')] += 1
-        stats['activity_trends']['monthly'][msg['date'].strftime('%Y-%m')] += 1
+        # מציאת היום עם הכי הרבה הודעות
+        if stats['messages_per_day'][day_str] > stats['most_messages_in_day']:
+            stats['most_messages_in_day'] = stats['messages_per_day'][day_str]
+            stats['most_active_day'] = day_str
         
-        if prev_msg_time:
-            time_diff = (msg['date'] - prev_msg_time).total_seconds()
-            if time_diff < 3600:
-                conversation_messages.append(msg)
-                stats['conversation_metrics']['avg_response_time'] += time_diff
-            else:
-                if len(conversation_messages) > 1:
-                    stats['conversation_metrics']['conversation_length_distribution'][len(conversation_messages)] += 1
-                conversation_messages = [msg]
-        
-        prev_msg_time = msg['date']
-        daily_messages[msg['date'].strftime('%Y-%m-%d')].append(msg)
+        # מציאת השעה עם הכי הרבה הודעות
+        if stats['messages_per_hour'][msg['date'].hour] > stats['most_messages_in_hour']:
+            stats['most_messages_in_hour'] = stats['messages_per_hour'][msg['date'].hour]
+            stats['most_active_hour'] = msg['date'].hour
     
-    daily_activity = [(day, len(msgs)) for day, msgs in daily_messages.items()]
-    daily_activity.sort(key=lambda x: x[1], reverse=True)
-    stats['engagement_metrics']['most_active_days'] = daily_activity[:5]
-    stats['engagement_metrics']['least_active_days'] = daily_activity[-5:]
-    
-    hourly_activity = [(hour, count) for hour, count in stats['messages_per_hour'].items()]
-    hourly_activity.sort(key=lambda x: x[1], reverse=True)
-    stats['engagement_metrics']['peak_hours'] = hourly_activity[:3]
-    stats['engagement_metrics']['quiet_hours'] = hourly_activity[-3:]
-    
-    sender_activity = [(sender, count) for sender, count in stats['messages_per_sender'].items()]
-    sender_activity.sort(key=lambda x: x[1], reverse=True)
-    stats['user_metrics']['top_contributors'] = sender_activity[:5]
-    
-    total_conversations = sum(stats['conversation_metrics']['conversation_length_distribution'].values())
-    if total_conversations > 0:
-        stats['conversation_metrics']['avg_response_time'] /= total_conversations
-    
-    stats['messages_per_sender'] = dict(stats['messages_per_sender'])
-    stats['messages_per_hour'] = dict(stats['messages_per_hour'])
-    stats['messages_per_day'] = dict(stats['messages_per_day'])
-    stats['activity_trends']['daily'] = dict(stats['activity_trends']['daily'])
-    stats['activity_trends']['weekly'] = dict(stats['activity_trends']['weekly'])
-    stats['activity_trends']['monthly'] = dict(stats['activity_trends']['monthly'])
-    stats['conversation_metrics']['conversation_length_distribution'] = dict(stats['conversation_metrics']['conversation_length_distribution'])
-    
-    stats['most_active_hour'] = max(stats['messages_per_hour'].items(), key=lambda x: x[1])[0]
-    
-    stats['average_message_length'] = round(total_length / len(messages), 1)
+    # מיון המשתמשים לפי כמות ההודעות מהגדול לקטן
+    sorted_senders = dict(sorted(stats['messages_per_sender'].items(), key=lambda x: x[1], reverse=True))
+    stats['messages_per_sender'] = sorted_senders
     
     return stats
+
+def filter_messages_by_date_range(messages, start_date=None, end_date=None):
+    if not start_date and not end_date:
+        return messages
+    
+    filtered_messages = []
+    for msg in messages:
+        msg_date = msg['date']
+        if start_date and msg_date < start_date:
+            continue
+        if end_date and msg_date > end_date:
+            continue
+        filtered_messages.append(msg)
+    
+    return filtered_messages
+
+def serialize_message(msg):
+    return {
+        'date': msg['date'].strftime('%Y-%m-%d %H:%M:%S'),
+        'sender': msg['sender'],
+        'message': msg['message']
+    }
+
+def deserialize_message(msg):
+    return {
+        'date': datetime.strptime(msg['date'], '%Y-%m-%d %H:%M:%S'),
+        'sender': msg['sender'],
+        'message': msg['message']
+    }
+
+def save_messages_to_temp(messages):
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as temp_file:
+        pickle.dump(messages, temp_file)
+        return temp_file.name
+
+def load_messages_from_temp(filename):
+    try:
+        with open(filename, 'rb') as temp_file:
+            return pickle.load(temp_file)
+    except:
+        return None
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -211,16 +202,28 @@ def upload_file():
                 return jsonify({'error': 'לא ניתן לקרוא את הקובץ. אנא וודא שהקובץ בקידוד תקין'}), 400
         
         messages = parse_whatsapp_chat(content)
-        stats = calculate_statistics(messages)
         
-        # Store only essential stats in session to reduce size
+        # Save messages to temp file and store filename in session
+        temp_filename = save_messages_to_temp(messages)
+        session['messages_file'] = temp_filename
+        
+        # Calculate initial statistics (last year by default)
+        one_year_ago = datetime.now().replace(year=datetime.now().year - 1)
+        filtered_messages = filter_messages_by_date_range(messages, start_date=one_year_ago)
+        stats = calculate_statistics(filtered_messages)
+        
+        # Store only essential stats in session
         session['chat_stats'] = {
             'total_messages': stats['total_messages'],
             'unique_senders': stats['unique_senders'],
-            'average_message_length': stats['average_message_length'],
-            'messages_per_hour': stats['messages_per_hour'],
-            'messages_per_sender': dict(list(stats['messages_per_sender'].items())[:10]),  # Only top 10 senders
-            'messages_per_day': dict(sorted(stats['messages_per_day'].items())[-30:])  # Only last 30 days
+            'most_active_day': stats['most_active_day'],
+            'most_messages_in_day': stats['most_messages_in_day'],
+            'most_active_hour': stats['most_active_hour'],
+            'most_messages_in_hour': stats['most_messages_in_hour'],
+            'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
+            'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
+            'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
+            'date_range': stats['date_range']
         }
         
         return jsonify({
@@ -244,9 +247,58 @@ def dashboard():
         return redirect('/')
     return render_template('dashboard.html', stats=stats)
 
+@app.route('/filter_stats', methods=['POST'])
+def filter_stats():
+    try:
+        data = request.get_json()
+        start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d') if data.get('start_date') else None
+        end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d') if data.get('end_date') else None
+        
+        # Load messages from temp file
+        messages_file = session.get('messages_file')
+        if not messages_file:
+            return jsonify({'error': 'לא נמצאו הודעות לניתוח'}), 400
+            
+        messages = load_messages_from_temp(messages_file)
+        if not messages:
+            return jsonify({'error': 'לא ניתן לטעון את ההודעות'}), 400
+        
+        # Filter messages by date range
+        filtered_messages = filter_messages_by_date_range(messages, start_date, end_date)
+        
+        if not filtered_messages:
+            return jsonify({'error': 'לא נמצאו הודעות בתקופה הנבחרת'}), 400
+        
+        # Calculate new statistics
+        stats = calculate_statistics(filtered_messages)
+        
+        # Store only essential stats in session
+        session['chat_stats'] = {
+            'total_messages': stats['total_messages'],
+            'unique_senders': stats['unique_senders'],
+            'most_active_day': stats['most_active_day'],
+            'most_messages_in_day': stats['most_messages_in_day'],
+            'most_active_hour': stats['most_active_hour'],
+            'most_messages_in_hour': stats['most_messages_in_hour'],
+            'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
+            'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
+            'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
+            'date_range': stats['date_range']
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': session['chat_stats']
+        })
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'אירעה שגיאה בעיבוד הנתונים'}), 400
+
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=True, host='0.0.0.0', port=5001) 

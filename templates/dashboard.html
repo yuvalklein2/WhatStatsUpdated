@@ -1,200 +1,612 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="he">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatStats - ניתוח צ'אט</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-color: #F7F9FB;
-            --card-bg: #FFFFFF;
-            --text-primary: #2E3A59;
-            --text-secondary: #4A4A4A;
-            --whatsapp-green: #25D366;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        body {
-            font-family: 'Assistant', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding: 2rem;
-        }
+{% extends "base.html" %}
 
-        .stats-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow);
-        }
-
-        .stats-header {
-            color: var(--text-primary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .stats-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--whatsapp-green);
-        }
-
-        .stats-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 2rem;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 class="text-center mb-5">סטטיסטיקות הצ'אט</h1>
-        
-        <div class="row">
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <h3 class="stats-value">{{ stats.total_messages }}</h3>
-                    <div class="stats-label">הודעות סה"כ</div>
+{% block content %}
+<div class="container mt-4 animate-fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="summary-bar">
+                <div class="summary-item">
+                    <div class="summary-value">{{ stats.total_messages }}</div>
+                    <div class="summary-label">הודעות</div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <h3 class="stats-value">{{ stats.unique_senders }}</h3>
-                    <div class="stats-label">משתתפים</div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ stats.unique_senders }}</div>
+                    <div class="summary-label">משתתפים</div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card text-center">
-                    <h3 class="stats-value">{{ stats.average_message_length }}</h3>
-                    <div class="stats-label">אורך הודעה ממוצע</div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ stats.most_active_day }}</div>
+                    <div class="summary-label">היום הכי פעיל</div>
+                    <div class="summary-sublabel">({{ stats.most_messages_in_day }} הודעות)</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ stats.most_active_hour }}:00</div>
+                    <div class="summary-label">השעה הכי פעילה</div>
+                    <div class="summary-sublabel">({{ stats.most_messages_in_hour }} הודעות)</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ (stats.total_messages / ((stats.messages_per_day.keys() | list) | length)) | round | int }}</div>
+                    <div class="summary-label">הודעות ביום</div>
+                    <div class="summary-sublabel">בממוצע</div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="stats-card">
-                    <h4 class="stats-header">הודעות לפי שעות</h4>
-                    <div class="chart-container">
-                        <canvas id="hourlyChart"></canvas>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card date-picker-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">בחר תקופת זמן לניתוח</h5>
+                    <div class="quick-filters mb-4">
+                        <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="7">שבוע אחרון</button>
+                        <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="30">חודש אחרון</button>
+                        <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="90">3 חודשים</button>
+                        <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="365">שנה אחרונה</button>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="stats-card">
-                    <h4 class="stats-header">הודעות לפי משתתף</h4>
-                    <div class="chart-container">
-                        <canvas id="senderChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="stats-card">
-                    <h4 class="stats-header">הודעות לאורך זמן</h4>
-                    <div class="chart-container">
-                        <canvas id="timelineChart"></canvas>
+                    <form id="dateFilterForm" class="row g-4">
+                        <div class="col-md-5 col-sm-12">
+                            <div class="date-input-group">
+                                <input type="text" class="form-control date-input" id="startDate" placeholder="מתאריך">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-5 col-sm-12">
+                            <div class="date-input-group">
+                                <input type="text" class="form-control date-input" id="endDate" placeholder="עד תאריך">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-12">
+                            <button type="submit" class="btn btn-primary w-100">הצג נתונים</button>
+                        </div>
+                    </form>
+                    <div class="mt-3 date-range-display">
+                        <span class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            מציג נתונים לתקופה: {{ stats.date_range.start }} - {{ stats.date_range.end }}
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Parse the stats data
-        const stats = {{ stats|tojson|safe }};
-        
-        // Prepare data for hourly chart
-        const hourlyData = Array(24).fill(0);
-        for (const [hour, count] of Object.entries(stats.messages_per_hour)) {
-            hourlyData[parseInt(hour)] = count;
+    <div class="row stats-cards">
+        <div class="col-md-4 col-sm-12 mb-4">
+            <div class="card h-100 animate-card">
+                <div class="card-body">
+                    <h5 class="card-title">סטטיסטיקות כלליות</h5>
+                    <div class="stat-item">
+                        <i class="bi bi-chat-dots"></i>
+                        <span class="stat-label">סה"כ הודעות:</span>
+                        <span class="stat-value">{{ stats.total_messages }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-people"></i>
+                        <span class="stat-label">מספר משתתפים:</span>
+                        <span class="stat-value">{{ stats.unique_senders }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="stat-label">היום הכי פעיל:</span>
+                        <span class="stat-value">{{ stats.most_active_day }} ({{ stats.most_messages_in_day }} הודעות)</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-clock"></i>
+                        <span class="stat-label">השעה הכי פעילה:</span>
+                        <span class="stat-value">{{ stats.most_active_hour }}:00 ({{ stats.most_messages_in_hour }} הודעות)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-sm-12 mb-4">
+            <div class="card h-100 animate-card">
+                <div class="card-body">
+                    <h5 class="card-title">הודעות לפי משתתף</h5>
+                    <canvas id="messagesPerSenderChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-12 mb-4">
+            <div class="card h-100 animate-card">
+                <div class="card-body">
+                    <h5 class="card-title">הודעות לפי שעה</h5>
+                    <canvas id="messagesPerHourChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-12 mb-4">
+            <div class="card h-100 animate-card">
+                <div class="card-body">
+                    <h5 class="card-title">הודעות לפי יום</h5>
+                    <canvas id="messagesPerDayChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/he.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-card {
+    opacity: 0;
+    animation: slideIn 0.6s ease-out forwards;
+}
+
+.stats-cards > div:nth-child(1) .animate-card { animation-delay: 0.1s; }
+.stats-cards > div:nth-child(2) .animate-card { animation-delay: 0.2s; }
+.stats-cards > div:nth-child(3) .animate-card { animation-delay: 0.3s; }
+.stats-cards > div:nth-child(4) .animate-card { animation-delay: 0.4s; }
+
+.date-picker-card {
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.date-picker-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.quick-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.quick-filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.date-input {
+    padding-left: 35px;
+    height: 45px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.date-input:focus {
+    border-color: #007AFF;
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+}
+
+.date-input:focus + i {
+    color: #007AFF;
+}
+
+.btn-primary {
+    height: 45px;
+    border-radius: 10px;
+    background: #007AFF;
+    border: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+.date-range-display {
+    font-size: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.flatpickr-calendar {
+    direction: rtl;
+    font-family: 'Assistant', sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.flatpickr-day.selected {
+    background: #007AFF;
+    border-color: #007AFF;
+}
+
+.flatpickr-day.selected:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: rgba(0,122,255,0.05);
+}
+
+.stat-item i {
+    font-size: 20px;
+    color: #007AFF;
+    margin-left: 10px;
+}
+
+.stat-label {
+    color: #666;
+    margin-left: 8px;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .quick-filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .quick-filter-btn {
+        flex: 0 0 auto;
+    }
+    
+    .date-input-group {
+        margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+        width: 100%;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stat-item i {
+        margin: 0 0 10px 0;
+        font-size: 24px;
+    }
+}
+
+.summary-bar {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.summary-item {
+    text-align: center;
+    flex: 1;
+    padding: 0 15px;
+    transition: transform 0.2s ease;
+}
+
+.summary-item:hover {
+    transform: translateY(-2px);
+}
+
+.summary-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #007AFF;
+    margin-bottom: 4px;
+    font-feature-settings: "tnum";
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.summary-sublabel {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.summary-divider {
+    width: 1px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 0 10px;
+}
+
+@media (max-width: 768px) {
+    .summary-bar {
+        flex-direction: column;
+        padding: 15px;
+    }
+    
+    .summary-item {
+        width: 100%;
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: right;
+    }
+    
+    .summary-value {
+        font-size: 20px;
+        margin-bottom: 0;
+        margin-left: 10px;
+    }
+    
+    .summary-divider {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+    }
+    
+    .summary-label {
+        font-size: 14px;
+    }
+    
+    .summary-sublabel {
+        font-size: 12px;
+        margin-top: 0;
+        margin-right: 5px;
+        color: #666;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Flatpickr
+    const dateConfig = {
+        locale: 'he',
+        dateFormat: 'Y-m-d',
+        disableMobile: false,
+        animate: true,
+        position: 'auto',
+    };
+    
+    const startDatePicker = flatpickr('#startDate', {
+        ...dateConfig,
+        onChange: function(selectedDates, dateStr) {
+            endDatePicker.set('minDate', dateStr);
         }
+    });
+    
+    const endDatePicker = flatpickr('#endDate', {
+        ...dateConfig,
+        onChange: function(selectedDates, dateStr) {
+            startDatePicker.set('maxDate', dateStr);
+        }
+    });
 
-        // Prepare data for sender chart
-        const senderData = Object.entries(stats.messages_per_sender)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10);
+    // Quick filter buttons
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const days = parseInt(this.dataset.days);
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            startDatePicker.setDate(startDate);
+            endDatePicker.setDate(endDate);
+            
+            // Trigger form submission
+            document.getElementById('dateFilterForm').dispatchEvent(new Event('submit'));
+        });
+    });
 
-        // Prepare data for timeline chart
-        const timelineData = Object.entries(stats.messages_per_day)
-            .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+    // Messages per sender chart
+    const senderCtx = document.getElementById('messagesPerSenderChart').getContext('2d');
+    const senderData = {
+        labels: {{ stats.messages_per_sender.keys() | list | tojson }},
+        datasets: [{
+            label: 'מספר הודעות',
+            data: {{ stats.messages_per_sender.values() | list | tojson }},
+            backgroundColor: 'rgba(0, 122, 255, 0.5)',
+            borderColor: 'rgba(0, 122, 255, 1)',
+            borderWidth: 1
+        }]
+    };
 
-        // Create hourly chart
-        new Chart(document.getElementById('hourlyChart'), {
-            type: 'bar',
-            data: {
-                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-                datasets: [{
-                    label: 'הודעות',
-                    data: hourlyData,
-                    backgroundColor: '#25D366',
-                }]
+    new Chart(senderCtx, {
+        type: 'bar',
+        data: senderData,
+        options: {
+            responsive: true,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Create sender chart
-        new Chart(document.getElementById('senderChart'), {
-            type: 'pie',
-            data: {
-                labels: senderData.map(d => d[0]),
-                datasets: [{
-                    data: senderData.map(d => d[1]),
-                    backgroundColor: [
-                        '#25D366', '#34B7F1', '#075E54', '#128C7E', '#ECE5DD',
-                        '#DCF8C6', '#FF0000', '#00FF00', '#0000FF', '#FFFF00'
-                    ]
-                }]
+    // Messages per hour chart
+    const hourCtx = document.getElementById('messagesPerHourChart').getContext('2d');
+    new Chart(hourCtx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.messages_per_hour.keys() | list | tojson }},
+            datasets: [{
+                label: 'מספר הודעות',
+                data: {{ stats.messages_per_hour.values() | list | tojson }},
+                fill: true,
+                backgroundColor: 'rgba(88, 86, 214, 0.1)',
+                borderColor: 'rgba(88, 86, 214, 1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-
-        // Create timeline chart
-        new Chart(document.getElementById('timelineChart'), {
-            type: 'line',
-            data: {
-                labels: timelineData.map(d => d[0]),
-                datasets: [{
-                    label: 'הודעות',
-                    data: timelineData.map(d => d[1]),
-                    borderColor: '#25D366',
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
+        }
+    });
+
+    // Messages per day chart
+    const dayCtx = document.getElementById('messagesPerDayChart').getContext('2d');
+    new Chart(dayCtx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.messages_per_day.keys() | list | tojson }},
+            datasets: [{
+                label: 'מספר הודעות',
+                data: {{ stats.messages_per_day.values() | list | tojson }},
+                fill: true,
+                backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                borderColor: 'rgba(52, 199, 89, 1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Date filter form submission with loading state and animation
+    document.getElementById('dateFilterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> טוען...';
+        
+        // Add loading class to cards
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.opacity = '0.6';
+            card.style.transform = 'scale(0.98)';
+            card.style.transition = 'all 0.3s ease';
         });
-    </script>
-</body>
-</html> 
+        
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        fetch('/filter_stats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                // Restore cards
+                document.querySelectorAll('.card').forEach(card => {
+                    card.style.opacity = '';
+                    card.style.transform = '';
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('אירעה שגיאה בעיבוד הבקשה');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            // Restore cards
+            document.querySelectorAll('.card').forEach(card => {
+                card.style.opacity = '';
+                card.style.transform = '';
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

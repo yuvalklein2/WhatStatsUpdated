@@ -1,540 +1,59 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="he">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatStats - איך לייצא צ'אט מוואטסאפ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6/dist/tippy.css">
-    <style>
-        :root {
-            --bg-color: #F7F9FB;
-            --card-bg: #FFFFFF;
-            --text-primary: #2E3A59;
-            --text-secondary: #4A4A4A;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --transition: all 0.3s ease;
-            --whatsapp-green: #25D366;
-            --whatsapp-dark: #128C7E;
-        }
-        
-        body {
-            font-family: 'Assistant', 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Assistant', sans-serif;
-            font-weight: 600;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-        }
-        .step-card {
-            background-color: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            position: relative;
-            opacity: 0;
-            animation: slideInRight 0.5s ease forwards;
-            cursor: pointer;
-        }
-        .step-card:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        .step-number {
-            width: 30px;
-            height: 30px;
-            background-color: #25D366;
-            color: white;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 10px;
-        }
-        .whatsapp-green {
-            color: #25D366;
-        }
-        .back-button {
-            color: #25D366;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 20px;
-        }
-        .back-button:hover {
-            color: #128C7E;
-        }
-        .platform-selector {
-            margin: 2rem 0;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-        .platform-button {
-            position: relative;
-            overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 12px;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-size: 1.1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            margin: 0 0.5rem;
-        }
-        .platform-button i {
-            font-size: 2rem;
-            transition: var(--transition);
-        }
-        .platform-button.active {
-            background-color: rgba(37, 211, 102, 0.1);
-            color: var(--whatsapp-green);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
-        }
-        .platform-button.active i {
-            transform: scale(1.2);
-        }
-        .platform-button:hover {
-            transform: translateY(-2px);
-        }
-        .platform-button:hover i {
-            transform: scale(1.2);
-        }
-        .platform-button i.bi-android2 {
-            color: #3DDC84;
-            filter: drop-shadow(0 2px 4px rgba(61, 220, 132, 0.2));
-        }
-        .platform-button i.bi-apple {
-            color: #000000;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        }
-        .platform-button.active i.bi-android2 {
-            color: #2CBD6F;
-            filter: drop-shadow(0 4px 8px rgba(44, 189, 111, 0.3));
-        }
-        .platform-button.active i.bi-apple {
-            color: var(--whatsapp-dark);
-            filter: drop-shadow(0 4px 8px rgba(18, 140, 126, 0.3));
-        }
-        .platform-content {
-            display: none;
-        }
-        .platform-content.active {
-            display: block;
-        }
-        .step-image {
-            width: 100%;
-            max-width: 300px;
-            border-radius: 8px;
-            margin: 1rem 0;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-        .step-image:hover {
-            transform: scale(1.02);
-        }
-        .step-tip {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            margin-top: 1rem;
-            color: var(--text-secondary);
-            width: 100%;
-        }
-        .step-tip i {
-            margin-left: 0.75rem;
-            color: #25D366;
-        }
-        .demo-gif {
-            display: none;
-        }
-        .progress-bar-container {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 8px;
-            height: 100vh;
-            background-color: var(--bg-color);
-        }
-        .progress-bar {
-            width: 100%;
-            background-color: var(--whatsapp-green);
-            height: 0%;
-            transition: height 0.3s ease;
-        }
-        .step-card.completed {
-            border-right: 4px solid var(--whatsapp-green);
-        }
-        .step-card.completed .step-number {
-            background-color: var(--whatsapp-green);
-        }
-
-        .step-card.completed::after {
-            content: '✓';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--whatsapp-green);
-            font-size: 1.5rem;
-        }
-
-        .step-card .completion-checkbox {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--text-secondary);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .step-card.completed .completion-checkbox {
-            background-color: var(--whatsapp-green);
-            border-color: var(--whatsapp-green);
-        }
-
-        .platform-button::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background-color: rgba(37, 211, 102, 0.1);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .platform-button:hover::after {
-            width: 300px;
-            height: 300px;
-        }
-
-        .platform-button.active::after {
-            background-color: rgba(37, 211, 102, 0.2);
-        }
-
-        /* התאמה למובייל */
-        @media (max-width: 768px) {
-            .progress-bar-container {
-                width: 4px;
-            }
-            
-            .platform-button {
-                padding: 0.75rem 1.5rem;
-            }
-        }
-
-        /* אנימציות */
-        @keyframes slideInRight {
-            from {
-                transform: translateX(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+    <title>WhatStats - עזרה</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="progress-bar-container">
-        <div class="progress-bar"></div>
-    </div>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">WhatStats</a>
+            <div class="nav-links">
+                <a href="/help" class="nav-link">עזרה</a>
+                <a href="https://github.com/yuvalklein2/WhatStatsUpdated" class="nav-link" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
-        <!-- Back Button -->
-        <a href="/" class="back-button">
-            <i class="bi bi-arrow-right"></i>
-            חזרה לדף הראשי
-        </a>
-
-        <!-- Header -->
-        <div class="header-section animate-in" style="animation-delay: 0.1s">
-            <h1 class="h3 mb-3">
-                <i class="bi bi-question-circle whatsapp-green"></i>
-                איך לייצא צ'אט מוואטסאפ
-            </h1>
-            <p class="lead">מדריך פשוט לייצוא היסטוריית שיחות מוואטסאפ</p>
+        <div class="card animate-fade-in">
+            <h1>איך להשתמש ב-WhatStats</h1>
             
-            <img src="https://i.imgur.com/example.gif" alt="הדגמת ייצוא צ'אט" class="demo-gif">
-        </div>
+            <h2>ייצוא הצ'אט מוואטסאפ</h2>
+            <ol>
+                <li>פתח את הצ'אט בוואטסאפ</li>
+                <li>לחץ על שם הצ'אט בראש המסך</li>
+                <li>גלול למטה ולחץ על "ייצוא צ'אט"</li>
+                <li>בחר "ללא מדיה"</li>
+                <li>שמור את הקובץ</li>
+            </ol>
 
-        <!-- Platform Selector -->
-        <div class="platform-selector text-center mb-4">
-            <button class="platform-button active" data-platform="android">
-                <i class="bi bi-android2"></i> אנדרואיד
-            </button>
-            <button class="platform-button" data-platform="iphone">
-                <i class="bi bi-apple"></i> אייפון
-            </button>
-        </div>
+            <h2>העלאת הקובץ</h2>
+            <ol>
+                <li>לחץ על כפתור "העלה ונתח"</li>
+                <li>בחר את קובץ הצ'אט שייצאת</li>
+                <li>המתן לעיבוד הנתונים</li>
+            </ol>
 
-        <!-- Android Instructions -->
-        <div class="platform-content active" id="android-content">
-            <div class="step-card">
-                <span class="step-number">1</span>
-                <h5 class="d-inline">פתיחת הצ'אט</h5>
-                <p class="mt-2">פתח את הצ'אט שברצונך לייצא בוואטסאפ</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: גלול למעלה כדי לטעון יותר הודעות
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">2</span>
-                <h5 class="d-inline">פתיחת תפריט אפשרויות</h5>
-                <p class="mt-2">לחץ על שלוש הנקודות (⋮) בפינה הימנית העליונה</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: התפריט מכיל אפשרויות נוספות לניהול הצ'אט
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">3</span>
-                <h5 class="d-inline">ייצוא הצ'אט</h5>
-                <p class="mt-2">בחר באפשרות "עוד" ואז "ייצוא צ'אט"</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: האפשרות נמצאת בתחתית התפריט
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">4</span>
-                <h5 class="d-inline">בחירת אפשרויות</h5>
-                <p class="mt-2">בחר "ללא מדיה" כדי לייצא רק את ההודעות הטקסטואליות</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: ייצוא ללא מדיה מהיר יותר ומייצר קובץ קטן יותר
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">5</span>
-                <h5 class="d-inline">שמירת הקובץ</h5>
-                <p class="mt-2">בחר את היעד לשמירת הקובץ במכשיר שלך</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: זכור היכן שמרת את הקובץ
-                </div>
-            </div>
-        </div>
-
-        <!-- iPhone Instructions -->
-        <div class="platform-content" id="iphone-content">
-            <div class="step-card">
-                <span class="step-number">1</span>
-                <h5 class="d-inline">פתיחת הצ'אט</h5>
-                <p class="mt-2">פתח את הצ'אט שברצונך לייצא בוואטסאפ</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: גלול למעלה כדי לטעון יותר הודעות
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">2</span>
-                <h5 class="d-inline">פתיחת פרטי הצ'אט</h5>
-                <p class="mt-2">לחץ על שם הצ'אט בחלק העליון של המסך</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: בקבוצות, לחץ על שם הקבוצה
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">3</span>
-                <h5 class="d-inline">ייצוא הצ'אט</h5>
-                <p class="mt-2">גלול למטה ובחר באפשרות "ייצוא צ'אט"</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: האפשרות נמצאת בתחתית התפריט
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">4</span>
-                <h5 class="d-inline">בחירת אפשרויות</h5>
-                <p class="mt-2">בחר "ללא מדיה" לייצוא הודעות טקסט בלבד</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: ייצוא ללא מדיה מהיר יותר
-                </div>
-            </div>
-
-            <div class="step-card">
-                <span class="step-number">5</span>
-                <h5 class="d-inline">שיתוף הקובץ</h5>
-                <p class="mt-2">בחר את אפשרות השיתוף המועדפת עליך (למשל: שמירה לקבצים, שליחה במייל)</p>
-                <div class="step-tip">
-                    <i class="bi bi-lightbulb"></i>
-                    טיפ: שמור את הקובץ בקלות על ידי שליחתו לעצמך במייל
-                </div>
-            </div>
-        </div>
-
-        <!-- Tips Section -->
-        <div class="alert alert-success mt-4" role="alert">
-            <h5><i class="bi bi-lightbulb"></i> טיפים חשובים:</h5>
-            <ul class="mb-0">
-                <li>מומלץ לייצא ללא מדיה לניתוח מהיר יותר</li>
-                <li>הקובץ המיוצא יהיה בפורמט TXT</li>
-                <li>אם הקובץ גדול, ייתכן שיישמר בפורמט ZIP</li>
-                <li>WhatStats תומך בשני הפורמטים</li>
+            <h2>התוצאות</h2>
+            <p>לאחר העיבוד תוכל לראות:</p>
+            <ul>
+                <li>מספר הודעות כולל</li>
+                <li>מספר משתתפים ייחודיים</li>
+                <li>אורך ממוצע להודעה</li>
+                <li>גרף הודעות לפי שעות</li>
+                <li>גרף הודעות לפי משתתפים</li>
+                <li>גרף הודעות לפי ימים</li>
             </ul>
+
+            <h2>פרטיות</h2>
+            <p>כל הנתונים נשמרים רק בזיכרון המחשב שלך ולא נשמרים בשום מקום. המידע נמחק אוטומטית כשתסגור את הדף.</p>
+
+            <h2>תמיכה</h2>
+            <p>אם נתקלת בבעיות או שיש לך שאלות, אנא פתח issue ב-<a href="https://github.com/yuvalklein2/WhatStatsUpdated" target="_blank">GitHub</a>.</p>
         </div>
     </div>
-
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
-    <script>
-        // אתחול טולטיפים
-        tippy('[data-tippy-content]', {
-            placement: 'top',
-            arrow: true,
-            animation: 'scale',
-            theme: 'light',
-            duration: 200
-        });
-
-        // מעבר בין פלטפורמות
-        const platformButtons = document.querySelectorAll('.platform-button');
-        const platformContents = document.querySelectorAll('.platform-content');
-        const stepCards = document.querySelectorAll('.step-card');
-        const progressBar = document.querySelector('.progress-bar');
-
-        // אנימציית כניסה לכרטיסיות
-        stepCards.forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-        });
-
-        // עדכון התקדמות
-        function updateProgress() {
-            const totalSteps = stepCards.length;
-            const completedSteps = document.querySelectorAll('.step-card.completed').length;
-            const progress = (completedSteps / totalSteps) * 100;
-            progressBar.style.height = `${progress}%`;
-
-            // אנימציה לסרגל ההתקדמות
-            if (progress === 100) {
-                progressBar.style.boxShadow = '0 0 10px var(--whatsapp-green)';
-            } else {
-                progressBar.style.boxShadow = 'none';
-            }
-        }
-
-        // טיפול בלחיצה על כרטיסייה
-        stepCards.forEach(card => {
-            card.addEventListener('click', () => {
-                card.classList.toggle('completed');
-                updateProgress();
-
-                // אנימציה בעת השלמת שלב
-                if (card.classList.contains('completed')) {
-                    const checkmark = document.createElement('div');
-                    checkmark.className = 'completion-animation';
-                    card.appendChild(checkmark);
-                    setTimeout(() => checkmark.remove(), 1000);
-                }
-            });
-        });
-
-        // מעבר בין פלטפורמות
-        platformButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                platformButtons.forEach(btn => btn.classList.remove('active'));
-                platformContents.forEach(content => {
-                    content.classList.remove('active');
-                    content.style.display = 'none';
-                });
-
-                button.classList.add('active');
-                const targetContent = document.getElementById(`${button.dataset.platform}-content`);
-                targetContent.style.display = 'block';
-                
-                // אנימציית פייד אין לתוכן החדש
-                setTimeout(() => {
-                    targetContent.classList.add('active');
-                    // אנימציית כניסה מחדש לכרטיסיות
-                    targetContent.querySelectorAll('.step-card').forEach((card, index) => {
-                        card.style.animation = 'none';
-                        card.offsetHeight; // Trigger reflow
-                        card.style.animation = `slideInRight 0.5s ease forwards ${index * 0.1}s`;
-                    });
-                }, 50);
-            });
-        });
-
-        // שמירת התקדמות בלוקל סטורג'
-        function saveProgress() {
-            const completedCards = Array.from(stepCards).map(card => card.classList.contains('completed'));
-            localStorage.setItem('whatstats-guide-progress', JSON.stringify(completedCards));
-        }
-
-        function loadProgress() {
-            const savedProgress = localStorage.getItem('whatstats-guide-progress');
-            if (savedProgress) {
-                const completedCards = JSON.parse(savedProgress);
-                completedCards.forEach((isCompleted, index) => {
-                    if (isCompleted) {
-                        stepCards[index].classList.add('completed');
-                    }
-                });
-                updateProgress();
-            }
-        }
-
-        // שמירת התקדמות בכל שינוי
-        stepCards.forEach(card => {
-            card.addEventListener('click', saveProgress);
-        });
-
-        // טעינת התקדמות בטעינת העמוד
-        document.addEventListener('DOMContentLoaded', loadProgress);
-
-        // אנימציית ריחוף על הכפתורים
-        platformButtons.forEach(button => {
-            button.addEventListener('mouseover', () => {
-                button.style.transform = 'translateY(-2px)';
-            });
-            
-            button.addEventListener('mouseout', () => {
-                button.style.transform = 'translateY(0)';
-            });
-        });
-    </script>
 </body>
 </html> 
