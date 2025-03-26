@@ -68,6 +68,14 @@ def calculate_statistics(messages):
         'date_range': {
             'start': min(msg['date'] for msg in messages).strftime('%d/%m/%Y'),
             'end': max(msg['date'] for msg in messages).strftime('%d/%m/%Y')
+        },
+        'keywords': defaultdict(int),
+        'avg_message_length': defaultdict(list),
+        'messages_per_weekday': defaultdict(int),
+        'message_length_distribution': {
+            'short': 0,    # 1-10 תווים
+            'medium': 0,   # 11-50 תווים
+            'long': 0      # מעל 50 תווים
         }
     }
     
@@ -81,6 +89,28 @@ def calculate_statistics(messages):
         day_str = msg['date'].strftime('%d/%m/%Y')
         stats['messages_per_day'][day_str] += 1
         
+        # חישוב מילות מפתח
+        words = msg['message'].split()
+        for word in words:
+            if len(word) > 2:  # התעלם ממילים קצרות
+                stats['keywords'][word] += 1
+        
+        # חישוב אורך הודעה ממוצע
+        msg_length = len(msg['message'])
+        stats['avg_message_length'][msg['sender']].append(msg_length)
+        
+        # חישוב התפלגות אורך ההודעות
+        if msg_length <= 10:
+            stats['message_length_distribution']['short'] += 1
+        elif msg_length <= 50:
+            stats['message_length_distribution']['medium'] += 1
+        else:
+            stats['message_length_distribution']['long'] += 1
+        
+        # חישוב הודעות לפי יום בשבוע
+        weekday = msg['date'].strftime('%A')  # שם היום באנגלית
+        stats['messages_per_weekday'][weekday] += 1
+        
         # מציאת היום עם הכי הרבה הודעות
         if stats['messages_per_day'][day_str] > stats['most_messages_in_day']:
             stats['most_messages_in_day'] = stats['messages_per_day'][day_str]
@@ -90,6 +120,15 @@ def calculate_statistics(messages):
         if stats['messages_per_hour'][msg['date'].hour] > stats['most_messages_in_hour']:
             stats['most_messages_in_hour'] = stats['messages_per_hour'][msg['date'].hour]
             stats['most_active_hour'] = msg['date'].hour
+    
+    # חישוב ממוצע אורך הודעות לכל משתתף
+    stats['avg_message_length'] = {
+        sender: round(sum(lengths) / len(lengths), 1)
+        for sender, lengths in stats['avg_message_length'].items()
+    }
+    
+    # מיון מילות המפתח לפי תדירות
+    stats['keywords'] = dict(sorted(stats['keywords'].items(), key=lambda x: x[1], reverse=True)[:20])
     
     # מיון המשתמשים לפי כמות ההודעות מהגדול לקטן
     sorted_senders = dict(sorted(stats['messages_per_sender'].items(), key=lambda x: x[1], reverse=True))
@@ -236,7 +275,11 @@ def upload_file():
             'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
             'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
             'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
-            'date_range': stats['date_range']
+            'date_range': stats['date_range'],
+            'keywords': stats['keywords'],
+            'avg_message_length': stats['avg_message_length'],
+            'messages_per_weekday': stats['messages_per_weekday'],
+            'message_length_distribution': stats['message_length_distribution']
         }
         
         return jsonify({
@@ -297,7 +340,11 @@ def filter_stats():
             'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
             'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
             'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
-            'date_range': stats['date_range']
+            'date_range': stats['date_range'],
+            'keywords': stats['keywords'],
+            'avg_message_length': stats['avg_message_length'],
+            'messages_per_weekday': stats['messages_per_weekday'],
+            'message_length_distribution': stats['message_length_distribution']
         }
         
         return jsonify({
