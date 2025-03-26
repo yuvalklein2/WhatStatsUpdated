@@ -4,40 +4,6 @@
 <div class="container mt-4 animate-fade-in">
     <div class="row mb-4">
         <div class="col-12">
-            <div class="summary-bar">
-                <div class="summary-item">
-                    <div class="summary-value">{{ stats.total_messages }}</div>
-                    <div class="summary-label">הודעות</div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item">
-                    <div class="summary-value">{{ stats.unique_senders }}</div>
-                    <div class="summary-label">משתתפים</div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item">
-                    <div class="summary-value">{{ stats.most_active_day }}</div>
-                    <div class="summary-label">היום הכי פעיל</div>
-                    <div class="summary-sublabel">({{ stats.most_messages_in_day }} הודעות)</div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item">
-                    <div class="summary-value">{{ stats.most_active_hour }}:00</div>
-                    <div class="summary-label">השעה הכי פעילה</div>
-                    <div class="summary-sublabel">({{ stats.most_messages_in_hour }} הודעות)</div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item">
-                    <div class="summary-value">{{ (stats.total_messages / ((stats.messages_per_day.keys() | list) | length)) | round | int }}</div>
-                    <div class="summary-label">הודעות ביום</div>
-                    <div class="summary-sublabel">בממוצע</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-12">
             <div class="card date-picker-card">
                 <div class="card-body">
                     <h5 class="card-title mb-4">בחר תקופת זמן לניתוח</h5>
@@ -75,39 +41,45 @@
         </div>
     </div>
 
-    <div class="row stats-cards">
-        <div class="col-md-4 col-sm-12 mb-4">
-            <div class="card h-100 animate-card">
-                <div class="card-body">
-                    <h5 class="card-title">סטטיסטיקות כלליות</h5>
-                    <div class="stat-item">
-                        <i class="bi bi-chat-dots"></i>
-                        <span class="stat-label">סה"כ הודעות:</span>
-                        <span class="stat-value">{{ stats.total_messages }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="bi bi-people"></i>
-                        <span class="stat-label">מספר משתתפים:</span>
-                        <span class="stat-value">{{ stats.unique_senders }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="bi bi-calendar-check"></i>
-                        <span class="stat-label">היום הכי פעיל:</span>
-                        <span class="stat-value">{{ stats.most_active_day }} ({{ stats.most_messages_in_day }} הודעות)</span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="bi bi-clock"></i>
-                        <span class="stat-label">השעה הכי פעילה:</span>
-                        <span class="stat-value">{{ stats.most_active_hour }}:00 ({{ stats.most_messages_in_hour }} הודעות)</span>
-                    </div>
-                </div>
-            </div>
+    <div class="stats-summary">
+        <div class="stat-card">
+            <i class="bi bi-chat-dots-fill stat-icon"></i>
+            <div class="stat-label">סה"כ הודעות</div>
+            <div class="stat-value">{{ "{:,}".format(stats.total_messages) }}</div>
         </div>
+        <div class="stat-card">
+            <i class="bi bi-graph-up-arrow stat-icon"></i>
+            <div class="stat-label">ממוצע הודעות ליום</div>
+            <div class="stat-value">{{ "{:,}".format(stats.avg_messages_per_day) }}</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-trophy-fill stat-icon"></i>
+            <div class="stat-label">המשתתף הפעיל ביותר</div>
+            <div class="stat-value">{{ stats.most_active_user.name }}</div>
+            <div class="stat-subtext">{{ stats.most_active_user.percentage }}% מההודעות</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-calendar-check-fill stat-icon"></i>
+            <div class="stat-label">היום הכי פעיל</div>
+            <div class="stat-value">{{ stats.most_active_day }}</div>
+            <div class="stat-subtext">{{ "{:,}".format(stats.most_messages_in_day) }} הודעות</div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-clock-fill stat-icon"></i>
+            <div class="stat-label">השעה הכי פעילה</div>
+            <div class="stat-value">{{ stats.most_active_hour }}:00</div>
+            <div class="stat-subtext">{{ "{:,}".format(stats.most_messages_in_hour) }} הודעות</div>
+        </div>
+    </div>
+
+    <div class="row stats-cards">
         <div class="col-md-8 col-sm-12 mb-4">
             <div class="card h-100 animate-card">
                 <div class="card-body">
                     <h5 class="card-title">הודעות לפי משתתף</h5>
-                    <canvas id="messagesPerSenderChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="messagesPerSenderChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -115,7 +87,9 @@
             <div class="card h-100 animate-card">
                 <div class="card-body">
                     <h5 class="card-title">הודעות לפי שעה</h5>
-                    <canvas id="messagesPerHourChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="messagesPerHourChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,7 +97,9 @@
             <div class="card h-100 animate-card">
                 <div class="card-body">
                     <h5 class="card-title">הודעות לפי יום</h5>
-                    <canvas id="messagesPerDayChart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="messagesPerDayChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,6 +111,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/he.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <style>
 @keyframes fadeIn {
@@ -159,12 +136,15 @@
 .stats-cards > div:nth-child(1) .animate-card { animation-delay: 0.1s; }
 .stats-cards > div:nth-child(2) .animate-card { animation-delay: 0.2s; }
 .stats-cards > div:nth-child(3) .animate-card { animation-delay: 0.3s; }
-.stats-cards > div:nth-child(4) .animate-card { animation-delay: 0.4s; }
 
 .date-picker-card {
     border: none;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .date-picker-card:hover {
@@ -258,33 +238,26 @@
     border-color: #0056b3;
 }
 
-.stat-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 8px;
+.card {
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-.stat-item:hover {
-    background: rgba(0,122,255,0.05);
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
 }
 
-.stat-item i {
-    font-size: 20px;
-    color: #007AFF;
-    margin-left: 10px;
-}
-
-.stat-label {
-    color: #666;
-    margin-left: 8px;
-}
-
-.stat-value {
+.card-title {
+    color: #1d1d1f;
+    font-size: 18px;
     font-weight: 600;
-    color: #333;
+    margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {
@@ -306,124 +279,107 @@
     .btn-primary {
         width: 100%;
     }
-    
-    .stat-item {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .stat-item i {
-        margin: 0 0 10px 0;
-        font-size: 24px;
-    }
 }
 
-.summary-bar {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    animation: slideDown 0.6s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.summary-item {
-    text-align: center;
-    flex: 1;
-    padding: 0 15px;
-    transition: transform 0.2s ease;
-}
-
-.summary-item:hover {
-    transform: translateY(-2px);
-}
-
-.summary-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: #007AFF;
-    margin-bottom: 4px;
-    font-feature-settings: "tnum";
-}
-
-.summary-label {
-    font-size: 14px;
-    color: #333;
-    font-weight: 500;
-}
-
-.summary-sublabel {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
-
-.summary-divider {
-    width: 1px;
-    height: 40px;
-    background: rgba(0, 0, 0, 0.1);
-    margin: 0 10px;
+.chart-container {
+    position: relative;
+    max-height: 400px;
+    height: 400px;
+    margin-bottom: 2rem;
 }
 
 @media (max-width: 768px) {
-    .summary-bar {
-        flex-direction: column;
-        padding: 15px;
+    .chart-container {
+        max-height: 300px;
+        height: 300px;
     }
-    
-    .summary-item {
-        width: 100%;
-        padding: 10px 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        text-align: right;
+}
+
+.card {
+    background: var(--card-bg);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.stat-card .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stat-card .stat-value {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-card .stat-subtext {
+    color: var(--accent-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.stat-card .stat-icon {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .stats-summary {
+        grid-template-columns: repeat(2, 1fr);
     }
-    
-    .summary-value {
-        font-size: 20px;
-        margin-bottom: 0;
-        margin-left: 10px;
-    }
-    
-    .summary-divider {
-        width: 100%;
-        height: 1px;
-        margin: 0;
-    }
-    
-    .summary-label {
-        font-size: 14px;
-    }
-    
-    .summary-sublabel {
-        font-size: 12px;
-        margin-top: 0;
-        margin-right: 5px;
-        color: #666;
+}
+
+@media (max-width: 480px) {
+    .stats-summary {
+        grid-template-columns: 1fr;
     }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Register the plugin
+    Chart.register(ChartDataLabels);
+    
     // Initialize Flatpickr
     const dateConfig = {
         locale: 'he',
@@ -458,43 +414,153 @@ document.addEventListener('DOMContentLoaded', function() {
             startDatePicker.setDate(startDate);
             endDatePicker.setDate(endDate);
             
-            // Trigger form submission
             document.getElementById('dateFilterForm').dispatchEvent(new Event('submit'));
         });
     });
 
-    // Messages per sender chart
-    const senderCtx = document.getElementById('messagesPerSenderChart').getContext('2d');
-    const senderData = {
-        labels: {{ stats.messages_per_sender.keys() | list | tojson }},
-        datasets: [{
-            label: 'מספר הודעות',
-            data: {{ stats.messages_per_sender.values() | list | tojson }},
-            backgroundColor: 'rgba(0, 122, 255, 0.5)',
-            borderColor: 'rgba(0, 122, 255, 1)',
-            borderWidth: 1
-        }]
+    // Chart.js default configuration
+    Chart.defaults.font.family = "'Assistant', sans-serif";
+    Chart.defaults.font.size = 14;
+    Chart.defaults.color = '#1d1d1f';
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+    Chart.defaults.plugins.tooltip.titleColor = '#1d1d1f';
+    Chart.defaults.plugins.tooltip.bodyColor = '#1d1d1f';
+    Chart.defaults.plugins.tooltip.borderColor = 'rgba(0, 0, 0, 0.1)';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+    Chart.defaults.plugins.tooltip.boxPadding = 6;
+    Chart.defaults.plugins.tooltip.usePointStyle = true;
+    Chart.defaults.plugins.tooltip.titleFont = {
+        size: 14,
+        weight: '600',
+        family: "'Assistant', sans-serif"
+    };
+    Chart.defaults.plugins.tooltip.bodyFont = {
+        size: 13,
+        family: "'Assistant', sans-serif"
     };
 
-    new Chart(senderCtx, {
-        type: 'bar',
-        data: senderData,
-        options: {
-            responsive: true,
-            animation: {
-                duration: 1000,
-                easing: 'easeInOutQuart'
+    // Custom chart colors
+    const chartColors = {
+        blue: '#4A90E2',
+        teal: '#50E3C2',
+        orange: '#F5A623',
+        purple: '#9013FE',
+        blueAlpha: 'rgba(74, 144, 226, 0.1)',
+        tealAlpha: 'rgba(80, 227, 194, 0.1)',
+        orangeAlpha: 'rgba(245, 166, 35, 0.1)',
+        purpleAlpha: 'rgba(144, 19, 254, 0.1)'
+    };
+
+    // Shared chart options
+    const sharedChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart',
+            delay: (context) => context.dataIndex * 100
+        },
+        plugins: {
+            legend: {
+                display: false
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.parsed.y.toLocaleString('he-IL')} הודעות`;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: '#EAEAEA',
+                    lineWidth: 0.5,
+                    drawBorder: false
+                },
+                ticks: {
+                    padding: 12,
+                    font: {
+                        size: 13,
+                        weight: '500'
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString('he-IL');
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    padding: 12,
+                    font: {
+                        size: 13,
+                        weight: '500'
+                    }
                 }
             }
         }
+    };
+
+    // Messages per sender chart
+    const senderCtx = document.getElementById('messagesPerSenderChart').getContext('2d');
+    const senderChartOptions = Object.assign({}, sharedChartOptions, {
+        plugins: Object.assign({}, sharedChartOptions.plugins, {
+            tooltip: Object.assign({}, sharedChartOptions.plugins.tooltip),
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                formatter: function(value) {
+                    return value.toLocaleString('he-IL');
+                },
+                font: {
+                    weight: '600',
+                    size: 12
+                },
+                color: '#666',
+                padding: 6
+            }
+        })
+    });
+
+    new Chart(senderCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ stats.messages_per_sender.keys() | list | tojson }},
+            datasets: [{
+                label: 'מספר הודעות',
+                data: {{ stats.messages_per_sender.values() | list | tojson }},
+                backgroundColor: chartColors.blue,
+                hoverBackgroundColor: chartColors.purple,
+                borderWidth: 0,
+                borderRadius: 8,
+                maxBarThickness: 50
+            }]
+        },
+        options: senderChartOptions
     });
 
     // Messages per hour chart
     const hourCtx = document.getElementById('messagesPerHourChart').getContext('2d');
+    const hourChartOptions = Object.assign({}, sharedChartOptions, {
+        scales: Object.assign({}, sharedChartOptions.scales, {
+            x: Object.assign({}, sharedChartOptions.scales.x, {
+                ticks: Object.assign({}, sharedChartOptions.scales.x.ticks, {
+                    callback: function(value) {
+                        return value + ':00';
+                    }
+                })
+            })
+        })
+    });
+
     new Chart(hourCtx, {
         type: 'line',
         data: {
@@ -503,27 +569,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: 'מספר הודעות',
                 data: {{ stats.messages_per_hour.values() | list | tojson }},
                 fill: true,
-                backgroundColor: 'rgba(88, 86, 214, 0.1)',
-                borderColor: 'rgba(88, 86, 214, 1)',
-                tension: 0.4
+                backgroundColor: chartColors.tealAlpha,
+                borderColor: chartColors.teal,
+                borderWidth: 2.5,
+                tension: 0.4,
+                pointBackgroundColor: chartColors.teal,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: chartColors.purple,
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            animation: {
-                duration: 1000,
-                easing: 'easeInOutQuart'
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+        options: hourChartOptions
     });
 
     // Messages per day chart
     const dayCtx = document.getElementById('messagesPerDayChart').getContext('2d');
+    const dayChartOptions = Object.assign({}, sharedChartOptions, {
+        scales: Object.assign({}, sharedChartOptions.scales, {
+            x: Object.assign({}, sharedChartOptions.scales.x, {
+                ticks: Object.assign({}, sharedChartOptions.scales.x.ticks, {
+                    maxRotation: 45,
+                    minRotation: 45
+                })
+            })
+        })
+    });
+
     new Chart(dayCtx, {
         type: 'line',
         data: {
@@ -532,23 +607,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: 'מספר הודעות',
                 data: {{ stats.messages_per_day.values() | list | tojson }},
                 fill: true,
-                backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                borderColor: 'rgba(52, 199, 89, 1)',
-                tension: 0.4
+                backgroundColor: chartColors.orangeAlpha,
+                borderColor: chartColors.orange,
+                borderWidth: 2.5,
+                tension: 0.4,
+                pointBackgroundColor: chartColors.orange,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: chartColors.purple,
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            animation: {
-                duration: 1000,
-                easing: 'easeInOutQuart'
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+        options: dayChartOptions
     });
 
     // Date filter form submission with loading state and animation

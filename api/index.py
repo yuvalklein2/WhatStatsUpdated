@@ -58,7 +58,6 @@ def parse_whatsapp_chat(content):
 def calculate_statistics(messages):
     stats = {
         'total_messages': len(messages),
-        'unique_senders': len(set(msg['sender'] for msg in messages)),
         'messages_per_sender': defaultdict(int),
         'messages_per_hour': defaultdict(int),
         'messages_per_day': defaultdict(int),
@@ -71,6 +70,10 @@ def calculate_statistics(messages):
             'end': max(msg['date'] for msg in messages).strftime('%d/%m/%Y')
         }
     }
+    
+    # חישוב ימים ייחודיים
+    unique_days = len(set(msg['date'].date() for msg in messages))
+    stats['avg_messages_per_day'] = round(stats['total_messages'] / unique_days, 1) if unique_days > 0 else 0
     
     for msg in messages:
         stats['messages_per_sender'][msg['sender']] += 1
@@ -91,6 +94,15 @@ def calculate_statistics(messages):
     # מיון המשתמשים לפי כמות ההודעות מהגדול לקטן
     sorted_senders = dict(sorted(stats['messages_per_sender'].items(), key=lambda x: x[1], reverse=True))
     stats['messages_per_sender'] = sorted_senders
+    
+    # חישוב אחוז ההודעות של המשתמש הפעיל ביותר
+    if sorted_senders and stats['total_messages'] > 0:
+        most_active_user = next(iter(sorted_senders.items()))
+        stats['most_active_user'] = {
+            'name': most_active_user[0],
+            'messages': most_active_user[1],
+            'percentage': round((most_active_user[1] / stats['total_messages']) * 100, 1)
+        }
     
     return stats
 
@@ -215,11 +227,12 @@ def upload_file():
         # Store only essential stats in session
         session['chat_stats'] = {
             'total_messages': stats['total_messages'],
-            'unique_senders': stats['unique_senders'],
+            'avg_messages_per_day': stats['avg_messages_per_day'],
             'most_active_day': stats['most_active_day'],
             'most_messages_in_day': stats['most_messages_in_day'],
             'most_active_hour': stats['most_active_hour'],
             'most_messages_in_hour': stats['most_messages_in_hour'],
+            'most_active_user': stats['most_active_user'],
             'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
             'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
             'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
@@ -275,11 +288,12 @@ def filter_stats():
         # Store only essential stats in session
         session['chat_stats'] = {
             'total_messages': stats['total_messages'],
-            'unique_senders': stats['unique_senders'],
+            'avg_messages_per_day': stats['avg_messages_per_day'],
             'most_active_day': stats['most_active_day'],
             'most_messages_in_day': stats['most_messages_in_day'],
             'most_active_hour': stats['most_active_hour'],
             'most_messages_in_hour': stats['most_messages_in_hour'],
+            'most_active_user': stats['most_active_user'],
             'messages_per_hour': dict(list(stats['messages_per_hour'].items())),
             'messages_per_sender': dict(list(stats['messages_per_sender'].items())),
             'messages_per_day': dict(list(stats['messages_per_day'].items())[-30:]),
