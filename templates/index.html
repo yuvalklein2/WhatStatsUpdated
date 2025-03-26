@@ -31,27 +31,31 @@
                     <i class="bi bi-arrow-left"></i>
                 </button>
             </form>
+            <div class="upload-info">
+                <p>תומך בקבצי .txt או .zip מוואטסאפ</p>
+                <p>קבל את הסטטיסטיקות שלך תוך שניות – ללא הרשמה</p>
+            </div>
         </div>
 
         <div class="instructions-card">
             <h3 class="instructions-title">איך זה עובד?</h3>
             <div class="steps">
                 <div class="step">
-                    <div class="step-number">1</div>
+                    <div class="step-icon">📤</div>
                     <div class="step-content">
                         <h4>ייצא את הצ'אט</h4>
                         <p>פתח את הצ'אט בוואטסאפ, לחץ על שלוש הנקודות ובחר "ייצא צ'אט"</p>
                     </div>
                 </div>
                 <div class="step">
-                    <div class="step-number">2</div>
+                    <div class="step-icon">📂</div>
                     <div class="step-content">
                         <h4>העלה את הקובץ</h4>
                         <p>העלה את קובץ הצ'אט שייצאת (בפורמט txt או zip)</p>
                     </div>
                 </div>
                 <div class="step">
-                    <div class="step-number">3</div>
+                    <div class="step-icon">📈</div>
                     <div class="step-content">
                         <h4>גלה תובנות</h4>
                         <p>קבל ניתוח מעמיק של השיחות שלך עם וויזואליזציה מרהיבה</p>
@@ -62,11 +66,23 @@
     </div>
 </div>
 
+<footer class="landing-footer">
+    <div class="footer-content">
+        <div class="footer-copyright">© 2025 WhatStats</div>
+        <div class="footer-links">
+            <a href="/help">איך זה עובד</a>
+            <a href="/privacy">פרטיות</a>
+            <a href="/contact">צור קשר</a>
+        </div>
+    </div>
+</footer>
+
 <style>
 .landing-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
+    min-height: calc(100vh - 48px - 60px); /* Subtract navbar and footer height */
 }
 
 .hero-section {
@@ -106,15 +122,28 @@
     border-radius: 20px;
     padding: 40px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.05);
     animation: slideUp 0.6s ease-out;
+    transition: all 0.3s ease;
+}
+
+.upload-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .upload-icon {
     font-size: 48px;
-    color: #007AFF;
+    background: linear-gradient(135deg, #3366CC, #6699FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 24px;
+    transition: transform 0.3s ease;
+}
+
+.upload-card:hover .upload-icon {
+    transform: scale(1.1);
 }
 
 .file-input-wrapper {
@@ -135,11 +164,13 @@
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .file-label:hover {
-    border-color: #007AFF;
-    background: rgba(0, 122, 255, 0.05);
+    border-color: #3366CC;
+    background: rgba(51, 102, 204, 0.05);
+    transform: translateY(-2px);
 }
 
 .file-label-text {
@@ -161,6 +192,7 @@
     padding: 12px;
     background: #f5f5f7;
     border-radius: 8px;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .selected-file-name {
@@ -190,16 +222,17 @@
     font-size: 16px;
     font-weight: 500;
     color: white;
-    background: #007AFF;
+    background: linear-gradient(135deg, #3366CC, #6699FF);
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .upload-button:not(:disabled):hover {
-    background: #0056b3;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 102, 204, 0.2);
 }
 
 .upload-button:disabled {
@@ -212,13 +245,24 @@
     font-size: 20px;
 }
 
+.upload-info {
+    margin-top: 20px;
+    color: #6e6e73;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.upload-info p {
+    margin: 5px 0;
+}
+
 .instructions-card {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.05);
     animation: slideUp 0.6s ease-out 0.2s backwards;
 }
@@ -240,18 +284,30 @@
     display: flex;
     align-items: flex-start;
     gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease-out backwards;
 }
 
-.step-number {
-    width: 32px;
-    height: 32px;
-    background: #007AFF;
-    color: white;
-    border-radius: 50%;
+.step:nth-child(1) { animation-delay: 0.3s; }
+.step:nth-child(2) { animation-delay: 0.4s; }
+.step:nth-child(3) { animation-delay: 0.5s; }
+
+.step:hover {
+    background: rgba(51, 102, 204, 0.05);
+    transform: translateX(-5px);
+}
+
+.step-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
+    background: rgba(51, 102, 204, 0.1);
+    border-radius: 50%;
     flex-shrink: 0;
 }
 
@@ -266,6 +322,47 @@
     color: #6e6e73;
     margin: 0;
     line-height: 1.4;
+}
+
+.landing-footer {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 20px 0;
+    margin-top: 40px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.footer-copyright {
+    color: #6e6e73;
+    font-size: 14px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: #6e6e73;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #3366CC;
 }
 
 @keyframes fadeIn {
@@ -300,6 +397,15 @@
 
     .upload-card, .instructions-card {
         padding: 24px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-links {
+        justify-content: center;
     }
 }
 </style>
