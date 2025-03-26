@@ -14,7 +14,7 @@
             </div>
             <form id="uploadForm" class="upload-form">
                 <div class="file-input-wrapper">
-                    <input type="file" id="file" name="file" accept=".txt,.zip" class="file-input">
+                    <input type="file" id="file" name="file" accept=".txt,.zip" class="file-input" onchange="handleFileSelect(this)">
                     <label for="file" class="file-label">
                         <span class="file-label-text">בחר קובץ צ'אט</span>
                         <span class="file-format">.txt או .zip</span>
@@ -26,7 +26,7 @@
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
-                <button type="submit" class="upload-button" disabled>
+                <button type="submit" class="upload-button" style="display: none;">
                     <span class="button-text">העלה וצור סטטיסטיקות</span>
                     <i class="bi bi-arrow-left"></i>
                 </button>
@@ -305,41 +305,20 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('uploadForm');
-    const fileInput = document.getElementById('file');
-    const uploadButton = form.querySelector('.upload-button');
-    const selectedFile = document.querySelector('.selected-file');
-    const selectedFileName = document.querySelector('.selected-file-name');
-    const clearFileButton = document.querySelector('.clear-file');
-    const fileLabel = document.querySelector('.file-label');
-
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            selectedFileName.textContent = file.name;
-            selectedFile.style.display = 'flex';
-            uploadButton.disabled = false;
-            fileLabel.style.display = 'none';
-        }
-    });
-
-    clearFileButton.addEventListener('click', function() {
-        fileInput.value = '';
-        selectedFile.style.display = 'none';
-        uploadButton.disabled = true;
-        fileLabel.style.display = 'flex';
-    });
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.querySelector('.selected-file-name').textContent = file.name;
+        document.querySelector('.selected-file').style.display = 'flex';
+        document.querySelector('.upload-button').style.display = 'none';
         
+        // הגש את הטופס אוטומטית
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        formData.append('file', file);
         
-        uploadButton.disabled = true;
-        const originalText = uploadButton.innerHTML;
-        uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> מעלה...';
+        // הצג אנימציית טעינה
+        document.querySelector('.file-label-text').textContent = 'מעלה...';
+        document.querySelector('.file-input-wrapper').style.opacity = '0.7';
         
         fetch('/upload', {
             method: 'POST',
@@ -351,17 +330,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = data.redirect;
             } else {
                 alert(data.error);
-                uploadButton.disabled = false;
-                uploadButton.innerHTML = originalText;
+                resetForm();
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('אירעה שגיאה בהעלאת הקובץ');
-            uploadButton.disabled = false;
-            uploadButton.innerHTML = originalText;
+            resetForm();
         });
-    });
+    }
+}
+
+function resetForm() {
+    document.querySelector('.file-label-text').textContent = 'בחר קובץ צ׳אט';
+    document.querySelector('.file-input-wrapper').style.opacity = '1';
+    document.querySelector('.selected-file').style.display = 'none';
+    document.querySelector('.upload-button').style.display = 'none';
+    document.getElementById('uploadForm').reset();
+}
+
+document.querySelector('.clear-file').addEventListener('click', function() {
+    resetForm();
+});
+
+// מונע הגשה רגילה של הטופס
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
 });
 </script>
 {% endblock %} 

@@ -6,11 +6,12 @@
         <div class="col-12">
             <div class="card date-picker-card">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">בחר תקופת זמן לניתוח</h5>
+                    <h5 class="card-title mb-4 text-center">בחר תקופת זמן לניתוח</h5>
                     <div class="quick-filters mb-4">
                         <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="7">שבוע אחרון</button>
                         <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="30">חודש אחרון</button>
                         <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="90">3 חודשים</button>
+                        <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="180">חצי שנה</button>
                         <button type="button" class="btn btn-outline-primary quick-filter-btn" data-days="365">שנה אחרונה</button>
                     </div>
                     <form id="dateFilterForm" class="row g-4">
@@ -107,7 +108,6 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/he.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <style>
 @keyframes fadeIn {
@@ -163,6 +163,12 @@
 .quick-filter-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quick-filter-btn.active {
+    background-color: var(--chart-blue);
+    color: white;
+    border-color: var(--chart-blue);
 }
 
 .date-input-group {
@@ -431,9 +437,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Register the plugin
-    Chart.register(ChartDataLabels);
-    
     // Initialize Flatpickr
     const dateConfig = {
         locale: 'he',
@@ -460,6 +463,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Quick filter buttons
     document.querySelectorAll('.quick-filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+            
             const days = parseInt(this.dataset.days);
             const endDate = new Date();
             const startDate = new Date();
@@ -568,20 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const senderChartOptions = Object.assign({}, sharedChartOptions, {
         plugins: Object.assign({}, sharedChartOptions.plugins, {
             tooltip: Object.assign({}, sharedChartOptions.plugins.tooltip),
-            datalabels: {
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value) {
-                    return value.toLocaleString('he-IL');
-                },
-                font: {
-                    weight: '600',
-                    size: 12
-                },
-                color: '#666',
-                padding: 6
-            }
-        })
+        }),
     });
 
     new Chart(senderCtx, {
@@ -589,16 +584,15 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: {{ stats.messages_per_sender.keys() | list | tojson }},
             datasets: [{
-                label: 'מספר הודעות',
                 data: {{ stats.messages_per_sender.values() | list | tojson }},
                 backgroundColor: chartColors.blue,
                 hoverBackgroundColor: chartColors.purple,
                 borderWidth: 0,
                 borderRadius: 8,
-                maxBarThickness: 50
-            }]
+                maxBarThickness: 50,
+            }],
         },
-        options: senderChartOptions
+        options: senderChartOptions,
     });
 
     // Messages per hour chart
@@ -609,10 +603,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 ticks: Object.assign({}, sharedChartOptions.scales.x.ticks, {
                     callback: function(value) {
                         return value + ':00';
-                    }
-                })
-            })
-        })
+                    },
+                }),
+            }),
+        }),
     });
 
     new Chart(hourCtx, {
@@ -620,7 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: {{ stats.messages_per_hour.keys() | list | tojson }},
             datasets: [{
-                label: 'מספר הודעות',
                 data: {{ stats.messages_per_hour.values() | list | tojson }},
                 fill: true,
                 backgroundColor: chartColors.tealAlpha,
@@ -634,10 +627,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 pointHoverRadius: 6,
                 pointHoverBackgroundColor: chartColors.purple,
                 pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2
-            }]
+                pointHoverBorderWidth: 2,
+            }],
         },
-        options: hourChartOptions
+        options: hourChartOptions,
     });
 
     // Messages per day chart
@@ -647,10 +640,10 @@ document.addEventListener('DOMContentLoaded', function() {
             x: Object.assign({}, sharedChartOptions.scales.x, {
                 ticks: Object.assign({}, sharedChartOptions.scales.x.ticks, {
                     maxRotation: 45,
-                    minRotation: 45
-                })
-            })
-        })
+                    minRotation: 45,
+                }),
+            }),
+        }),
     });
 
     new Chart(dayCtx, {
@@ -658,7 +651,6 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: {{ stats.messages_per_day.keys() | list | tojson }},
             datasets: [{
-                label: 'מספר הודעות',
                 data: {{ stats.messages_per_day.values() | list | tojson }},
                 fill: true,
                 backgroundColor: chartColors.orangeAlpha,
@@ -672,10 +664,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 pointHoverRadius: 6,
                 pointHoverBackgroundColor: chartColors.purple,
                 pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2
-            }]
+                pointHoverBorderWidth: 2,
+            }],
         },
-        options: dayChartOptions
+        options: dayChartOptions,
     });
 
     // Date filter form submission with loading state and animation
