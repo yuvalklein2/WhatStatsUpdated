@@ -72,34 +72,30 @@
         </div>
     </div>
 
-    <div class="row stats-cards">
-        <div class="col-md-8 col-sm-12 mb-4">
-            <div class="card h-100 animate-card">
-                <div class="card-body">
-                    <h5 class="card-title">הודעות לפי משתתף</h5>
-                    <div class="chart-container">
-                        <canvas id="messagesPerSenderChart"></canvas>
-                    </div>
+    <div class="charts-grid">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">הודעות לפי משתתף</h5>
+                <div class="chart-container">
+                    <canvas id="messagesPerSenderChart"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-sm-12 mb-4">
-            <div class="card h-100 animate-card">
-                <div class="card-body">
-                    <h5 class="card-title">הודעות לפי שעה</h5>
-                    <div class="chart-container">
-                        <canvas id="messagesPerHourChart"></canvas>
-                    </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">הודעות לפי שעה</h5>
+                <div class="chart-container">
+                    <canvas id="messagesPerHourChart"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-sm-12 mb-4">
-            <div class="card h-100 animate-card">
-                <div class="card-body">
-                    <h5 class="card-title">הודעות לפי יום</h5>
-                    <div class="chart-container">
-                        <canvas id="messagesPerDayChart"></canvas>
-                    </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">הודעות לפי יום</h5>
+                <div class="chart-container">
+                    <canvas id="messagesPerDayChart"></canvas>
                 </div>
             </div>
         </div>
@@ -371,6 +367,64 @@
 @media (max-width: 480px) {
     .stats-summary {
         grid-template-columns: 1fr;
+    }
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.card {
+    background: var(--card-bg);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.card-body {
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 300px;
     }
 }
 </style>
